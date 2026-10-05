@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+		<script>
+			if (sessionStorage.getItem('siteTransitioning') === '1') {
+				document.documentElement.classList.add('is-arriving');
+				document.documentElement.dataset.departingTheme =
+					sessionStorage.getItem('departingTheme') || 'home';
+				document.documentElement.dataset.targetTheme =
+					sessionStorage.getItem('targetTheme') || document.body?.dataset?.pageTheme || 'home';
+			}
+		</script>
+				<title>The Constellation Manifold</title>
+
+				<link rel="preconnect" href="https://fonts.googleapis.com">
+					<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+						<link
+							href="https://fonts.googleapis.com/css2?family=Federo&family=Saira+Extra+Condensed:wght@400;600&display=swap"
+							rel="stylesheet"
+>
+
+							<link rel="stylesheet" href="style.css">
+</head>
+
+	<body class="nodal_hub-page" data-page-theme="nodal-hub">
+
+		<nav>
+			<a href="index.html" data-target-theme="home">Home</a>
+			<a href="nodal_hub.html" data-target-theme="nodal-hub">Lyvein</a>
+		</nav>
+
+		<div class="loader" id="loader">
+			<img class="loader-gif" src="images/Loading.GIF" alt="Loading">
+	</div>
+
+		<div class="sparks-layer" id="sparks"></div>
+		<div class="transition-panel" id="transition-panel" data-transition-theme="nodal-hub"></div>
+		<div class="out-panel" id="out-panel"></div>
+
+
+		<main class="lyvein-hub">
+
+			<div class="lyvein-kv" aria-label="Lyvein">
+
+
+				<svg
+				  class="node-network"
+				  viewBox="0 0 100 100"
+				  preserveAspectRatio="none"
+				  aria-hidden="true">
+				</svg>
+				
+				<!-- 01 — Modern -->
+				<a class="lyvein-node node-modern" href="modern.html" aria-label="Modern">
+					<span class="node-number">01</span>
+					<span class="node-dot"></span>
+					<span class="node-label">Modern</span>
+				</a>
+
+				<!-- 02 — Fantasy -->
+				<a class="lyvein-node node-fantasy" href="fantasy.html" aria-label="Fantasy">
+					<span class="node-number">02</span>
+					<span class="node-dot"></span>
+					<span class="node-label">Fantasy</span>
+				</a>
+
+				<!-- 03 — Northern -->
+				<a class="lyvein-node node-northern" href="northern.html" aria-label="Northern">
+					<span class="node-number">03</span>
+					<span class="node-dot"></span>
+					<span class="node-label">Northern</span>
+				</a>
+
+				<!-- 04 — Unknown -->
+				<a class="lyvein-node node-unknown" href="unknown.html" aria-label="Unknown">
+					<span class="node-number">04</span>
+					<span class="node-dot"></span>
+					<span class="node-label">???</span>
+				</a>
+
+				<!-- 05 — ... -->
+				<a class="lyvein-node node-ellipsis" href="more.html" aria-label="More">
+					<span class="node-number">05</span>
+					<span class="node-dot"></span>
+					<span class="node-label">...</span>
+				</a>
+
+				<!-- 06 — ... -->
+				<a class="lyvein-node node-magic" href="magic.html" aria-label="magic">
+					<span class="node-number">06</span>
+					<span class="node-dot"></span>
+					<span class="node-label">Magic</span>
+				</a>
+
+			</div>
+
+		</main>
+
+		<script src="script.js"></script>
+
+	</body>
+</html>

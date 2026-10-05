@@ -339,15 +339,8 @@ initSparks('sparks');
 
     if (!width) return;
 
-    const portrait = window.matchMedia(
-      '(orientation: portrait)'
-    ).matches;
-
     const compact = width <= 768;
-
-    const placementWidth = portrait
-      ? width
-      : width * 0.65;
+    const placementWidth = width;
 
     const nav = document.querySelector('nav');
 
@@ -488,10 +481,8 @@ initSparks('sparks');
 
     let mobilePositions = null;
 
-    if (
-          compact ||
-          window.matchMedia('(pointer: coarse)').matches
-        ) {
+    // Scatter nodes across the full placement area on every device.
+    {
       // Labels appear only after zooming.
       // Reserve space here for the dots and numbers.
       const halfWidth = Math.max(
@@ -953,54 +944,10 @@ function isTouchInteraction() {
   canvas.style.backgroundImage = 'none';
   canvas.style.removeProperty('transform');
 
-// Position the artwork and align its fade and blur.
-const portraitLayout = window.matchMedia(
-  '(orientation: portrait)'
-);
-
-const kvImageSource = background.style.backgroundImage.match(
-  /^url\(["']?(.*?)["']?\)$/
-);
-
-if (kvImageSource) {
-  const kvImage = new Image();
-
-  function updateImageEdge() {
-    const portrait = portraitLayout.matches;
-    const shift = window.innerWidth * 0.25;
-
-    // Update the inline position on every orientation change.
-    background.style.backgroundPosition = portrait
-      ? 'center center'
-      : `right -${shift}px center`;
-
-    if (!kvImage.naturalWidth || !kvImage.naturalHeight) return;
-
-    const displayedWidth =
-      background.clientHeight *
-      (kvImage.naturalWidth / kvImage.naturalHeight);
-
-    const imageLeft = portrait
-      ? (background.clientWidth - displayedWidth) / 2
-      : background.clientWidth - displayedWidth + shift;
-
-    background.style.setProperty(
-      '--kv-left',
-      Math.max(0, imageLeft) + 'px'
-    );
-  }
-
-  kvImage.onload = updateImageEdge;
-  kvImage.src = kvImageSource[1];
-
-  updateImageEdge();
-
-  const imageEdgeObserver = new ResizeObserver(updateImageEdge);
-  imageEdgeObserver.observe(background);
-
-  portraitLayout.addEventListener('change', updateImageEdge);
-  window.addEventListener('resize', updateImageEdge);
-}
+    // Use the same centred, uncropped background in both orientations.
+    background.style.backgroundPosition = 'center center';
+    background.style.backgroundSize = 'cover';
+    background.style.backgroundRepeat = 'no-repeat';
 
   // Separate layer for nodes and connections.
   let layer = canvas.querySelector('.node-zoom-layer');
