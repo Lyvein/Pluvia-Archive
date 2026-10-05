@@ -340,13 +340,14 @@ initSparks('sparks');
     if (!width) return;
 
     const compact = width <= 768;
-    const landscape = window.matchMedia(
-      '(orientation: landscape)'
+    const desktop = window.matchMedia(
+      '(min-width: 769px) and (hover: hover) and (pointer: fine)'
     ).matches;
 
-    const placementWidth = landscape
-      ? width * 0.72
+    const placementWidth = desktop
+      ? width * 0.65
       : width;
+    const nav = document.querySelector('nav');
 
     const top = Math.max(
       90,
@@ -497,8 +498,7 @@ initSparks('sparks');
       );
 
       const minX = margin + halfWidth + gap / 2;
-      const maxX =
-        placementWidth - margin - halfWidth - gap / 2;
+      const maxX = width - margin - halfWidth - gap / 2;
 
       const minY = top + above + gap / 2;
       const maxY = height - margin - halfHeight - gap / 2;

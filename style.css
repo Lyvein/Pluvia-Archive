@@ -525,7 +525,7 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   outline: none;
   border-radius: 2px;
 
-  background: rgba(130, 160, 180, 0.20);
+  background: rgba(130, 160, 180, 0.2);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
 
@@ -732,23 +732,5 @@ html.is-arriving .out-panel[data-transition-theme="nodal-hub"].leaving {
     background-color: rgba(235, 246, 250, 0.58);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-  }
-}
-
-@media (orientation: portrait) {
-  .lyvein-kv,
-  .node-camera-background {
-    background-position: center center !important;
-    background-size: auto 100%;
-  }
-
-  .node-camera-background {
-    clip-path: none;
-    -webkit-mask-image: none;
-    mask-image: none;
-  }
-
-  .node-camera-background::after {
-    display: none;
   }
 }
