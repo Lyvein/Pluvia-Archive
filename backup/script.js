@@ -779,6 +779,19 @@ initSparks('sparks');
   let activeNode = null;
   let returning = false;
 
+  let lastPointerType = '';
+
+canvas.addEventListener('pointerdown', event => {
+  lastPointerType = event.pointerType;
+}, { passive: true });
+
+function isTouchInteraction() {
+  return (
+    lastPointerType === 'touch' ||
+    window.matchMedia('(hover: none)').matches
+  );
+}
+
   let hoverTimer = null;
   let labelTimer = null;
   let resetTimer = null;
@@ -1128,21 +1141,48 @@ initSparks('sparks');
     }
   });
 
-  canvas.addEventListener('focusin', event => {
-    if (activeNode || returning) return;
+    canvas.addEventListener('focusin', event => {
+      if (isTouchInteraction()) return;
+      if (activeNode || returning) return;
 
-    const node = findNode(event.target);
+      const node = findNode(event.target);
 
-    if (node) {
-      focusNode(node);
-    }
-  });
+      if (node) {
+        focusNode(node);
+      }
+    });
 
-  canvas.addEventListener('click', event => {
-    if (activeNode && !findNode(event.target)) {
-      resetCamera();
-    }
-  });
+    canvas.addEventListener('click', event => {
+      const node = findNode(event.target);
+
+      if (isTouchInteraction() && node) {
+        // First tap: zoom in instead of opening the link.
+        if (!activeNode) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+
+          if (!returning) {
+            focusNode(node);
+          }
+
+          return;
+        }
+
+        // Second tap on the selected node: allow its link to open.
+        if (node === activeNode) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        return;
+      }
+
+      // Tap or click the background to return to the full network.
+      if (activeNode && !node) {
+        resetCamera();
+      }
+    }, { capture: true });
 
   backButton.addEventListener('click', resetCamera);
 

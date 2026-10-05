@@ -470,40 +470,148 @@ initSparks('sparks');
     const cellW = availableWidth / columns;
     const cellH = (height - top - margin) / rows;
 
-    const points = [];
+        const points = [];
 
     boxes.sort((a, b) => a.seed.order - b.seed.order);
 
+    let mobilePositions = null;
+
+    if (compact) {
+      // Labels appear only after zooming.
+      // Reserve space here for the dots and numbers.
+      const halfWidth = Math.max(
+        ...boxes.map(box => box.node.offsetWidth / 2)
+      );
+
+      const halfHeight = Math.max(
+        ...boxes.map(box => box.node.offsetHeight / 2)
+      );
+
+      const minX = margin + halfWidth + gap / 2;
+      const maxX = width - margin - halfWidth - gap / 2;
+
+      const minY = top + above + gap / 2;
+      const maxY = height - margin - halfHeight - gap / 2;
+
+      // Keep the random sequence stable during layout updates.
+      // Reloading the page creates a new arrangement.
+      let randomState = (
+        Math.floor(boxes[0].seed.x * 4294967295) ^
+        Math.floor(boxes[0].seed.y * 4294967295)
+      ) >>> 0;
+
+      if (!randomState) {
+        randomState = 1;
+      }
+
+      function randomValue() {
+        randomState ^= randomState << 13;
+        randomState ^= randomState >>> 17;
+        randomState ^= randomState << 5;
+
+        return (randomState >>> 0) / 4294967296;
+      }
+
+      const placed = [];
+
+      for (const box of boxes) {
+        let best = null;
+        let bestDistance = -1;
+
+        const half = box.node.offsetWidth / 2;
+        const belowDot = box.node.offsetHeight / 2;
+
+        // Search across the whole usable area instead of grid cells.
+        for (let attempt = 0; attempt < 160; attempt++) {
+          const candidate = {
+            x: minX + randomValue() * Math.max(0, maxX - minX),
+            y: minY + randomValue() * Math.max(0, maxY - minY),
+
+            half,
+            above: box.above,
+            below: belowDot
+          };
+
+          const overlaps = placed.some(other =>
+            candidate.x - half <
+              other.x + other.half + gap &&
+
+            candidate.x + half >
+              other.x - other.half - gap &&
+
+            candidate.y - box.above <
+              other.y + other.below + gap &&
+
+            candidate.y + belowDot >
+              other.y - other.above - gap
+          );
+
+          if (overlaps) continue;
+
+          // Favor positions with breathing room around them.
+          const distance = placed.length
+            ? Math.min(...placed.map(other => Math.hypot(
+                candidate.x - other.x,
+                candidate.y - other.y
+              )))
+            : 0;
+
+          if (distance > bestDistance) {
+            best = candidate;
+            bestDistance = distance;
+          }
+        }
+
+        if (!best) break;
+
+        placed.push(best);
+      }
+
+      // Fall back to the spaced grid if the network is too crowded.
+      if (placed.length === boxes.length) {
+        mobilePositions = placed;
+      }
+    }
+
     boxes.forEach((box, index) => {
-      const col = index % columns;
-      const row = Math.floor(index / columns);
+      let x;
+      let y;
 
-      const slackX = Math.max(
-        0,
-        cellW - left - right - gap
-      );
+      if (mobilePositions) {
+        x = mobilePositions[index].x;
+        y = mobilePositions[index].y;
+      } else {
+        // Preserve the existing desktop placement.
+        const col = index % columns;
+        const row = Math.floor(index / columns);
 
-      const slackY = Math.max(
-        0,
-        cellH - above - below - gap
-      );
+        const slackX = Math.max(
+          0,
+          cellW - left - right - gap
+        );
 
-      const x =
-        margin +
-        col * cellW +
-        left +
-        gap / 2 +
-        box.seed.x * slackX;
+        const slackY = Math.max(
+          0,
+          cellH - above - below - gap
+        );
 
-      const y =
-        top +
-        row * cellH +
-        above +
-        gap / 2 +
-        box.seed.y * slackY;
+        x =
+          margin +
+          col * cellW +
+          left +
+          gap / 2 +
+          box.seed.x * slackX;
 
-      box.node.style.left = `${x}px`;
-      box.node.style.top = `${y}px`;
+        y =
+          top +
+          row * cellH +
+          above +
+          gap / 2 +
+          box.seed.y * slackY;
+      }
+
+      box.node.style.left = x + 'px';
+      box.node.style.top = y + 'px';
 
       points.push({
         x: x + box.dotOffset,
