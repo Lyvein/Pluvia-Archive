@@ -261,20 +261,21 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   inset: 0;
   isolation: isolate;
 
-
   background-image: url("images/1blue_horizontal.png");
   background-size: auto 100%;
-  background-position: right -18.23vw center;
+  background-position: right -30vw center;
   background-repeat: no-repeat;
 }
 
-
-
 .node-camera-background {
-  --kv-crop: 500px;
-  --kv-edge: calc(
-    var(--kv-left, 66.667%) + var(--kv-crop)
-  );
+  /* Match your current settings at a 3840px viewport width. */
+  --kv-crop: 13.0208vw;
+  --kv-edge: calc(var(--kv-left, 0px) + var(--kv-crop));
+  --kv-fade-start: 0.78125vw;
+  --kv-fade-end: 5.20833vw;
+  --kv-blur-full: 7.8125vw;
+  --kv-blur-end: 15.625vw;
+  --kv-blur-strength: 1.30208vw;
 
   position: absolute;
   inset: 0;
@@ -282,28 +283,26 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   z-index: -1;
   pointer-events: none;
 
-  background-size: auto 100%;
-  background-position: right -18.23vw center;
-  background-repeat: no-repeat;
 
   transform-origin: center;
   transition: transform 0.9s cubic-bezier(.25, .1, .25, 1);
 
   clip-path: inset(0 0 0 max(0px, var(--kv-edge)));
 
-  /* Fade inward from the cropped edge. */
   -webkit-mask-image: linear-gradient(
     to right,
     transparent var(--kv-edge),
-    rgba(0, 0, 0, 0.05) calc(var(--kv-edge) + 30px),
-    black calc(var(--kv-edge) + 200px)
+    rgba(0, 0, 0, 0.05)
+      calc(var(--kv-edge) + var(--kv-fade-start)),
+    black calc(var(--kv-edge) + var(--kv-fade-end))
   );
 
   mask-image: linear-gradient(
     to right,
     transparent var(--kv-edge),
-    rgba(0, 0, 0, 0.05) calc(var(--kv-edge) + 30px),
-    black calc(var(--kv-edge) + 200px)
+    rgba(0, 0, 0, 0.05)
+      calc(var(--kv-edge) + var(--kv-fade-start)),
+    black calc(var(--kv-edge) + var(--kv-fade-end))
   );
 }
 
@@ -318,34 +317,36 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   background-position: inherit;
   background-repeat: inherit;
 
-  filter: blur(50px);
+  filter: blur(var(--kv-blur-strength));
 
-  /* Blend the blurred edge into the sharp image. */
   -webkit-mask-image: linear-gradient(
     to right,
-    black calc(var(--kv-edge) + 300px),
-    transparent calc(var(--kv-edge) + 600px)
+    black calc(var(--kv-edge) + var(--kv-blur-full)),
+    transparent calc(var(--kv-edge) + var(--kv-blur-end))
   );
 
   mask-image: linear-gradient(
     to right,
-    black calc(var(--kv-edge) + 300px),
-    transparent calc(var(--kv-edge) + 600px)
+    black calc(var(--kv-edge) + var(--kv-blur-full)),
+    transparent calc(var(--kv-edge) + var(--kv-blur-end))
   );
 }
 
-/* Portrait layout: centred artwork with the existing fade and blur. */
 @media (orientation: portrait) {
   .lyvein-kv,
   .node-camera-background {
-    background-position: center center !important;
+    background-position: center center;
   }
 
   .node-camera-background {
     --kv-crop: 0px;
+    --kv-fade-start: 2vw;
+    --kv-fade-end: 10vw;
+    --kv-blur-full: 12vw;
+    --kv-blur-end: 24vw;
+    --kv-blur-strength: 2vw;
   }
 }
-
 
 .node-zoom-layer {
   position: absolute;

@@ -339,14 +339,16 @@ initSparks('sparks');
 
     if (!width) return;
 
-    const compact = width <= 768;
-    const desktop = window.matchMedia(
-      '(min-width: 769px) and (hover: hover) and (pointer: fine)'
+    const portrait = window.matchMedia(
+      '(orientation: portrait)'
     ).matches;
 
-    const placementWidth = desktop
-      ? width * 0.65
-      : width;
+    const compact = width <= 768;
+
+    const placementWidth = portrait
+      ? width
+      : width * 0.65;
+
     const nav = document.querySelector('nav');
 
     const top = Math.max(
@@ -486,7 +488,10 @@ initSparks('sparks');
 
     let mobilePositions = null;
 
-    if (compact) {
+    if (
+          compact ||
+          window.matchMedia('(pointer: coarse)').matches
+        ) {
       // Labels appear only after zooming.
       // Reserve space here for the dots and numbers.
       const halfWidth = Math.max(
@@ -498,7 +503,8 @@ initSparks('sparks');
       );
 
       const minX = margin + halfWidth + gap / 2;
-      const maxX = width - margin - halfWidth - gap / 2;
+      const maxX =
+        placementWidth - margin - halfWidth - gap / 2;
 
       const minY = top + above + gap / 2;
       const maxY = height - margin - halfHeight - gap / 2;
@@ -947,7 +953,7 @@ function isTouchInteraction() {
   canvas.style.backgroundImage = 'none';
   canvas.style.removeProperty('transform');
 
-// Keep the fade and blur aligned with the image in both orientations.
+// Position the artwork and align its fade and blur.
 const portraitLayout = window.matchMedia(
   '(orientation: portrait)'
 );
@@ -960,17 +966,23 @@ if (kvImageSource) {
   const kvImage = new Image();
 
   function updateImageEdge() {
+    const portrait = portraitLayout.matches;
+    const shift = window.innerWidth * 0.25;
+
+    // Update the inline position on every orientation change.
+    background.style.backgroundPosition = portrait
+      ? 'center center'
+      : `right -${shift}px center`;
+
     if (!kvImage.naturalWidth || !kvImage.naturalHeight) return;
 
     const displayedWidth =
       background.clientHeight *
       (kvImage.naturalWidth / kvImage.naturalHeight);
 
-    const landscapeShift = window.innerWidth * 0.1823;
-
-    const imageLeft = portraitLayout.matches
+    const imageLeft = portrait
       ? (background.clientWidth - displayedWidth) / 2
-      : background.clientWidth - displayedWidth + landscapeShift;
+      : background.clientWidth - displayedWidth + shift;
 
     background.style.setProperty(
       '--kv-left',
@@ -981,11 +993,15 @@ if (kvImageSource) {
   kvImage.onload = updateImageEdge;
   kvImage.src = kvImageSource[1];
 
+  updateImageEdge();
+
   const imageEdgeObserver = new ResizeObserver(updateImageEdge);
   imageEdgeObserver.observe(background);
 
   portraitLayout.addEventListener('change', updateImageEdge);
+  window.addEventListener('resize', updateImageEdge);
 }
+
   // Separate layer for nodes and connections.
   let layer = canvas.querySelector('.node-zoom-layer');
 

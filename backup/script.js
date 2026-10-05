@@ -340,6 +340,13 @@ initSparks('sparks');
     if (!width) return;
 
     const compact = width <= 768;
+    const desktop = window.matchMedia(
+      '(min-width: 769px) and (hover: hover) and (pointer: fine)'
+    ).matches;
+
+    const placementWidth = desktop
+      ? width * 0.65
+      : width;
     const nav = document.querySelector('nav');
 
     const top = Math.max(
@@ -414,7 +421,10 @@ initSparks('sparks');
     const cellMinWidth = left + right + gap;
     const cellMinHeight = above + below + gap;
 
-    const availableWidth = Math.max(1, width - margin * 2);
+    const availableWidth = Math.max(
+      1,
+      placementWidth - margin * 2
+    );
 
     const maxColumns = Math.max(
       1,
@@ -937,6 +947,45 @@ function isTouchInteraction() {
   canvas.style.backgroundImage = 'none';
   canvas.style.removeProperty('transform');
 
+// Keep the fade and blur aligned with the image in both orientations.
+const portraitLayout = window.matchMedia(
+  '(orientation: portrait)'
+);
+
+const kvImageSource = background.style.backgroundImage.match(
+  /^url\(["']?(.*?)["']?\)$/
+);
+
+if (kvImageSource) {
+  const kvImage = new Image();
+
+  function updateImageEdge() {
+    if (!kvImage.naturalWidth || !kvImage.naturalHeight) return;
+
+    const displayedWidth =
+      background.clientHeight *
+      (kvImage.naturalWidth / kvImage.naturalHeight);
+
+    const landscapeShift = window.innerWidth * 0.1823;
+
+    const imageLeft = portraitLayout.matches
+      ? (background.clientWidth - displayedWidth) / 2
+      : background.clientWidth - displayedWidth + landscapeShift;
+
+    background.style.setProperty(
+      '--kv-left',
+      Math.max(0, imageLeft) + 'px'
+    );
+  }
+
+  kvImage.onload = updateImageEdge;
+  kvImage.src = kvImageSource[1];
+
+  const imageEdgeObserver = new ResizeObserver(updateImageEdge);
+  imageEdgeObserver.observe(background);
+
+  portraitLayout.addEventListener('change', updateImageEdge);
+}
   // Separate layer for nodes and connections.
   let layer = canvas.querySelector('.node-zoom-layer');
 
@@ -973,7 +1022,7 @@ function isTouchInteraction() {
 
   backButton.type = 'button';
   backButton.className = 'node-camera-back';
-  backButton.textContent = '← Back to network';
+  backButton.textContent = '← Back to Network';
 
   document.body.appendChild(backButton);
 
