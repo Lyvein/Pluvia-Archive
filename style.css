@@ -264,7 +264,7 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
 
   background-image: url("images/1blue_horizontal.png");
   background-size: auto 100%;
-  background-position: right -700px center;
+  background-position: right -18.23vw center;
   background-repeat: no-repeat;
 }
 
@@ -283,7 +283,7 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   pointer-events: none;
 
   background-size: auto 100%;
-  background-position: right center;
+  background-position: right -18.23vw center;
   background-repeat: no-repeat;
 
   transform-origin: center;
@@ -333,6 +333,19 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
     transparent calc(var(--kv-edge) + 600px)
   );
 }
+
+/* Portrait layout: centred artwork with the existing fade and blur. */
+@media (orientation: portrait) {
+  .lyvein-kv,
+  .node-camera-background {
+    background-position: center center !important;
+  }
+
+  .node-camera-background {
+    --kv-crop: 0px;
+  }
+}
+
 
 .node-zoom-layer {
   position: absolute;

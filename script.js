@@ -947,7 +947,11 @@ function isTouchInteraction() {
   canvas.style.backgroundImage = 'none';
   canvas.style.removeProperty('transform');
 
-  // Locate the left edge of the right-aligned background image.
+// Keep the fade and blur aligned with the image in both orientations.
+const portraitLayout = window.matchMedia(
+  '(orientation: portrait)'
+);
+
 const kvImageSource = background.style.backgroundImage.match(
   /^url\(["']?(.*?)["']?\)$/
 );
@@ -962,14 +966,15 @@ if (kvImageSource) {
       background.clientHeight *
       (kvImage.naturalWidth / kvImage.naturalHeight);
 
-    const leftEdge = Math.max(
-      0,
-      background.clientWidth - displayedWidth + 700
-    );
+    const landscapeShift = window.innerWidth * 0.1823;
+
+    const imageLeft = portraitLayout.matches
+      ? (background.clientWidth - displayedWidth) / 2
+      : background.clientWidth - displayedWidth + landscapeShift;
 
     background.style.setProperty(
       '--kv-left',
-      leftEdge + 'px'
+      Math.max(0, imageLeft) + 'px'
     );
   }
 
@@ -978,8 +983,9 @@ if (kvImageSource) {
 
   const imageEdgeObserver = new ResizeObserver(updateImageEdge);
   imageEdgeObserver.observe(background);
-}
 
+  portraitLayout.addEventListener('change', updateImageEdge);
+}
   // Separate layer for nodes and connections.
   let layer = canvas.querySelector('.node-zoom-layer');
 
