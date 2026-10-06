@@ -1173,6 +1173,14 @@ function isTouchInteraction() {
 
     const position = getNodePosition(activeNode);
 
+    const network = canvas.querySelector('.node-network');
+
+    if (network) {
+      network.style.transformOrigin =
+        (position.x + 60) + 'px ' +
+        (position.y - 40) + 'px';
+    }
+
     // Anchor the zoom at the node's original position.
     const moveX = position.x * (1 - NODE_ZOOM);
     const moveY = position.y * (1 - NODE_ZOOM);

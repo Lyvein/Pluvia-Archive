@@ -307,7 +307,7 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   transform: translate(-50%, -50%);
   cursor: pointer;
   pointer-events: auto;
-  transform-origin: center;
+  transform-origin: calc(50% + 60px) calc(50% - 40px);
   transition:
       opacity 0.35s ease,
       filter 0.45s ease,
@@ -469,14 +469,18 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   z-index: 1;
   pointer-events: none;
   overflow: visible;
-  transition: opacity 0.5s ease;
+  transform: scale(1);
+    transition:
+      opacity 0.5s ease,
+      transform 0.35s cubic-bezier(.2, .8, .2, 1);
 }
 
 .node-network line {
-  vector-effect: non-scaling-stroke;
+  vector-effect: none;
   stroke: rgb(0, 255, 54);
   stroke-width: 1.5;
   filter: drop-shadow(0 0 3px rgba(0, 255, 54, 0.25));
+  transition: stroke-width 0.35s cubic-bezier(.2, .8, .2, 1);
 }
 
 .lyvein-kv.is-node-focused .lyvein-node {
@@ -492,7 +496,25 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
 }
 
 .lyvein-kv.is-node-focused .node-network {
-  opacity: 0;
+  opacity: 1;
+}
+
+.lyvein-kv.is-node-focused:has(
+  .is-camera-target.is-hover-ready:hover
+) .node-network,
+.lyvein-kv.is-node-focused:has(
+  .is-camera-target.is-hover-ready:focus-visible
+) .node-network {
+  transform: scale(1.15);
+}
+
+.lyvein-kv.is-node-focused:has(
+  .is-camera-target.is-hover-ready:hover
+) .node-network line,
+.lyvein-kv.is-node-focused:has(
+  .is-camera-target.is-hover-ready:focus-visible
+) .node-network line {
+  stroke-width: 2;
 }
 
 /* =========================================================
