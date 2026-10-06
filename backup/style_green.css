@@ -1,0 +1,755 @@
+:root {
+  --bg: #0f0f14;
+  --fg: #f4f2ee;
+  --intro_accent: #96B59C;
+  --menu_accent: #CFFFC4;
+  --muted: #9a97a3;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+nav {
+  display: flex;
+  gap: 2rem;
+  padding: 1.5rem 3rem;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+}
+
+nav a {
+  color: var(--fg);
+  text-decoration: none;
+  font-family: 'Saira Extra Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 1.3rem; /* ~21px, up from the default ~16px */
+  letter-spacing: 0.05em;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+nav a:hover { opacity: 1; color: var(--menu_accent); }
+
+.loader {
+  position: fixed;
+  inset: 0;
+  height: 100vh;
+  height: 100dvh;
+  width: 100vw;
+
+  background: #000; /* solid black while GIF is playing */
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1002;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+
+.loader.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loader-gif {
+  width: min(40vw, 400px);  /* scales with screen, capped at 400px */
+  height: auto;
+  display: block;
+}
+
+/* ---- Click / drag VFX ---- */
+.click-fx {
+  position: fixed;
+  pointer-events: none;
+  border-radius: 50%;
+  z-index: 999;
+  transform: translate(-50%, -50%);
+}
+
+.click-fx.ripple {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 10px 2px rgba(255,255,255,0.8), 0 0 20px 6px rgba(255,255,255,0.4);
+  animation: ripple-out 0.6s ease-out forwards;
+}
+
+.click-fx.trail {
+  width: 5px;
+  height: 5px;
+  background: #ffffff;
+  box-shadow: 0 0 6px 2px rgba(255,255,255,0.8);
+  animation: trail-fade 0.5s ease-out forwards;
+}
+
+@keyframes ripple-out {
+  to {
+    width: 60px;
+    height: 60px;
+    opacity: 0;
+  }
+}
+
+@keyframes trail-fade {
+  to {
+    width: 2px;
+    height: 2px;
+    opacity: 0;
+  }
+}
+
+/* ---- Ambient glowing sparks ---- */
+.sparks-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 2; /* above hero image, below nav/loader */
+}
+
+.spark {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 6px 2px rgba(255,255,255,0.8);
+  opacity: 0;
+  animation: spark-float linear infinite;
+}
+
+@keyframes spark-float {
+  0%   { opacity: 0; transform: translateY(0) scale(0.8); }
+  10%  { opacity: 0.9; }
+  90%  { opacity: 0.4; }
+  100% { opacity: 0; transform: translateY(-120px) scale(1.1); }
+}
+
+/* ---- Hero / index page ---- */
+.hero {
+  height: 100vh;   /* fallback for older browsers */
+  height: 100dvh;  /* stays accurate on mobile as the address bar shows/hides */
+  width: 100vw;
+  overflow: hidden;
+  position: relative;
+}
+
+.parallax-wrap {
+  position: absolute;
+  inset: 0;
+}
+
+.parallax-wrap img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 110%;
+  height: 110%;
+  object-fit: cover;
+  object-position: 50% 0%; /* shift focus down toward the lower part of the image */
+  transform: translate(-50%, -50%);
+  will-change: transform;
+  transition: transform 0.15s ease-out;
+}
+
+
+/* Shift the home artwork slightly left on mobile or portrait screens.
+   Increase 55% to move it farther left; 50% restores the centered crop. */
+@media (max-width: 768px), (orientation: portrait) {
+  .hero .parallax-wrap img {
+    object-position: 55% 0%;
+  }
+}
+
+.hero-title {
+  position: absolute;
+  bottom: 3rem;
+  text-align: center;
+  width: 100%;
+  color: var(--fg);
+  font-family: 'WindSong', cursive;
+  font-weight: 500;
+  font-size: 2rem;
+  letter-spacing: 0.05em;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ---- Intro page ---- */
+.intro {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 8rem 2rem 4rem;
+}
+
+.intro h1 {
+  font-size: 2.5rem;
+  color: var(--intro_accent);
+  margin-bottom: 0.25rem;
+}
+
+.intro .subtitle {
+  color: var(--muted);
+  margin-bottom: 2rem;
+}
+
+.intro img {
+  width: 100%;
+  max-width: 320px;
+  border-radius: 12px;
+  float: right;
+  margin: 0 0 1rem 2rem;
+}
+
+.intro p {
+  line-height: 1.7;
+}
+
+.intro dl {
+  margin-top: 2rem;
+}
+
+.intro dt {
+  color: var(--intro_accent);
+  font-weight: 600;
+  margin-top: 1rem;
+}
+
+.intro dd {
+  margin: 0;
+  color: var(--fg);
+}
+
+
+/* =========================================================
+   NODAL HUB — SCENE AND CAMERA
+   ========================================================= */
+
+.nodal_hub-page {
+  margin: 0;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #F2FCFF;
+  --node-color: rgb(0, 255, 54);
+  --node-label-color: rgb(0, 120, 25);
+  --node-hover-color: rgb(0, 176, 34);
+}
+
+.lyvein-hub {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.lyvein-kv {
+  position: absolute;
+  inset: 0;
+  isolation: isolate;
+
+  background-image: url("images/manifold.jpeg");
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.node-camera-background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  z-index: -1;
+  pointer-events: none;
+
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+
+  transform-origin: center;
+  transition: transform 0.9s cubic-bezier(.25, .1, .25, 1);
+}
+
+.node-zoom-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  transform-origin: 0 0;
+  transition: transform 0.8s cubic-bezier(.25, .1, .25, 1);
+}
+
+/* =========================================================
+   NODES — POSITIONED BY JAVASCRIPT
+   ========================================================= */
+
+.lyvein-node {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 14px;
+  text-decoration: none;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  pointer-events: auto;
+  transform-origin: calc(50% + 60px) calc(50% - 40px);
+  transition:
+      opacity 0.35s ease,
+      filter 0.45s ease,
+      transform 0.35s cubic-bezier(.2, .8, .2, 1);
+    }
+
+.lyvein-kv.is-node-focused
+.lyvein-node.is-camera-target.is-hover-ready:hover,
+.lyvein-kv.is-node-focused
+.lyvein-node.is-camera-target.is-hover-ready:focus-visible {
+  transform: translate(-50%, -50%) scale(1.15);
+}
+
+.node-number {
+  position: absolute;
+  left: clamp(6px, 0.3vw, 11px);
+  top: clamp(-19px, -0.9vw, -11px);
+  font-family: "Saira Extra Condensed", sans-serif;
+  font-size: clamp(16px, 0.78vw, 25px);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--node-label-color);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--node-label-color) 40%, transparent);
+  transition: color 0.35s ease, opacity 0.35s ease;
+}
+
+.node-dot {
+  position: relative;
+  width: clamp(20px, 1.1vw, 36px);
+  height: clamp(20px, 1.1vw, 36px);
+  border-radius: 50%;
+  background: var(--node-color);
+  opacity: 0.92;
+  border: none;
+  box-shadow:
+    0 0 clamp(6px, 0.35vw, 12px) color-mix(in srgb, var(--node-color) 75%, transparent),
+    0 0 clamp(12px, 0.7vw, 24px) color-mix(in srgb, var(--node-color) 30%, transparent);
+  transition:
+    transform 0.35s cubic-bezier(.2, .8, .2, 1),
+    background 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+.node-dot::before,
+.node-dot::after {
+  content: "";
+  position: absolute;
+  display: block;
+  box-sizing: border-box;
+  border: 4px solid rgba(0, 255, 54, 0.8);
+  border-radius: 50%;
+  background: none;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.35s ease;
+}
+
+.node-dot::before {
+  width: var(--orbit-1-size, 240px);
+  height: var(--orbit-1-size, 240px);
+  left: calc(50% + var(--orbit-1-x, -40px));
+  top: calc(50% + var(--orbit-1-y, 25px));
+  opacity: 0.7;
+}
+
+.node-dot::after {
+  width: var(--orbit-2-size, 380px);
+  height: var(--orbit-2-size, 380px);
+  left: calc(50% + var(--orbit-2-x, 60px));
+  top: calc(50% + var(--orbit-2-y, -35px));
+  border-style: dashed;
+  opacity: 0.5;
+}
+
+/* Keep the dot's hover glow; hovering does not reveal text. */
+.lyvein-node:hover .node-dot,
+.lyvein-node:focus-visible .node-dot {
+  box-shadow:
+    0 0 clamp(8px, 0.45vw, 15px)
+      color-mix(in srgb, var(--node-color) 95%, transparent),
+    0 0 clamp(16px, 0.9vw, 30px)
+      color-mix(in srgb, var(--node-color) 45%, transparent);
+}
+
+.lyvein-node:hover .node-dot::before,
+.lyvein-node:focus-visible .node-dot::before,
+.lyvein-node:hover .node-dot::after,
+.lyvein-node:focus-visible .node-dot::after {
+  opacity: 0.85;
+}
+
+.lyvein-node:hover .node-number,
+.lyvein-node:focus-visible .node-number,
+.lyvein-node:hover .node-label,
+.lyvein-node:focus-visible .node-label,
+.lyvein-node.is-camera-target .node-number,
+.lyvein-node.is-camera-target .node-label {
+  color: var(--node-hover-color);
+}
+
+/* =========================================================
+   LABELS — REVEALED ONLY AFTER CAMERA MOVEMENT
+   ========================================================= */
+
+.node-label {
+  position: absolute;
+  left: calc(100% + clamp(15px, 0.8vw, 28px));
+  top: 50%;
+  width: max-content;
+  white-space: nowrap;
+  overflow-wrap: anywhere;
+  font-family: "Federo", sans-serif;
+  font-size: clamp(19px, 1vw, 32px);
+  font-weight: 400;
+  letter-spacing: 0.045em;
+  color: var(--node-label-color);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--node-label-color) 32%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transform-origin: left center;
+  transform: translate(var(--label-slide-from, -12px), var(--label-offset-y, -50%));
+  transition: opacity 0.55s ease, transform 0.7s ease;
+}
+
+.lyvein-node.is-camera-target .node-number {
+  font-size: clamp(21px, 1.014vw, 32.5px);
+}
+
+.lyvein-node.is-camera-target .node-label {
+  font-size: clamp(25px, 1.3vw, 42px);
+}
+
+@media (max-width: 768px) {
+  .lyvein-node.is-camera-target .node-label {
+    font-size: 19.5px;
+  }
+}
+
+.lyvein-kv.is-node-focused .is-camera-target.is-label-visible .node-label {
+  opacity: 1;
+  transform: translate(0, var(--label-offset-y, -50%));
+}
+
+@media (max-width: 768px) {
+  .node-label {
+    font-size: 15px;
+  }
+}
+
+/* =========================================================
+   NETWORK AND FOCUSED STATE
+   ========================================================= */
+
+.node-network {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  overflow: visible;
+  transform: scale(1);
+    transition:
+      opacity 0.5s ease,
+      transform 0.35s cubic-bezier(.2, .8, .2, 1);
+}
+
+.node-network line {
+  vector-effect: none;
+  stroke: rgb(0, 255, 54);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 3px rgba(0, 255, 54, 0.25));
+  transition: stroke-width 0.35s cubic-bezier(.2, .8, .2, 1);
+}
+
+.lyvein-kv.is-node-focused .lyvein-node {
+  opacity: 0;
+  filter: blur(0px);
+  pointer-events: none;
+}
+
+.lyvein-kv.is-node-focused .lyvein-node.is-camera-target {
+  opacity: 1;
+  filter: none;
+  pointer-events: auto;
+}
+
+.lyvein-kv.is-node-focused .node-network {
+  opacity: 1;
+}
+
+.lyvein-kv.is-node-focused:has(
+  .is-camera-target.is-hover-ready:hover
+) .node-network,
+.lyvein-kv.is-node-focused:has(
+  .is-camera-target.is-hover-ready:focus-visible
+) .node-network {
+  transform: scale(1.15);
+}
+
+.lyvein-kv.is-node-focused:has(
+  .is-camera-target.is-hover-ready:hover
+) .node-network line,
+.lyvein-kv.is-node-focused:has(
+  .is-camera-target.is-hover-ready:focus-visible
+) .node-network line {
+  stroke-width: 2;
+}
+
+/* =========================================================
+   HUB NAVIGATION AND CAMERA RETURN BUTTON
+   ========================================================= */
+
+.nodal_hub-page nav a {
+  color: rgb(88, 115, 95);
+}
+
+.nodal_hub-page nav a:hover,
+.nodal_hub-page nav a:focus-visible {
+  color: rgb(14, 79, 29);
+}
+
+.node-camera-back {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 20;
+
+  padding: 10px 16px;
+  border: none;
+  outline: none;
+  border-radius: 2px;
+
+  background: rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+
+    color: var(--node-color);
+    text-shadow: 0 0 6px rgba(0, 255, 54, 0.3);
+
+  font-family: "Saira Extra Condensed", sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+
+  transition:
+    opacity 0.25s ease,
+    visibility 0.25s ease,
+    background-color 0.25s ease;
+}
+
+.node-camera-back.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.node-camera-back:hover,
+.node-camera-back:focus-visible {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .node-camera-background,
+  .node-zoom-layer,
+  .lyvein-node,
+  .node-dot,
+  .node-dot::after,
+  .node-label,
+  .node-number,
+  .node-network,
+  .node-camera-back {
+    transition: none;
+  }
+}
+
+/* =========================================================
+   PAGE TRANSITIONS — EXISTING TIMING AND THEMES
+   ========================================================= */
+
+.transition-panel,
+.out-panel {
+  position: fixed;
+  top: -100%;
+  left: -100%;
+  width: 250%;
+  height: 250%;
+  pointer-events: none;
+  will-change: transform, background-color, backdrop-filter;
+}
+
+.transition-panel {
+  z-index: 999;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  transform: rotate(-15deg) translate(100%, 100%);
+  transition:
+    transform 1.4s cubic-bezier(0.83, 0, 0.17, 1),
+    background-color 0.7s ease 0.7s,
+    backdrop-filter 0.7s ease 0.7s,
+    -webkit-backdrop-filter 0.7s ease 0.7s;
+}
+
+.transition-panel.covering {
+  transform: rotate(-15deg) translate(0%, 0%);
+  background: rgba(0, 0, 0, 1);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+}
+
+.loader.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+html.is-arriving .loader {
+  opacity: 1;
+  visibility: visible;
+  transition: none;
+}
+
+html.is-arriving[data-departing-theme="home"] .loader {
+  background: #000000;
+}
+
+html.is-arriving[data-departing-theme="nodal-hub"] .loader {
+  background: #ebf6fa;
+}
+
+.out-panel {
+  z-index: 1001;
+  opacity: 1;
+  visibility: hidden;
+  transform: rotate(-15deg) translate(0%, 0%);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  transition:
+    transform 1.4s cubic-bezier(0.83, 0, 0.17, 1),
+    background-color 0.7s ease 0.7s,
+    backdrop-filter 0.7s ease 0.7s,
+    -webkit-backdrop-filter 0.7s ease 0.7s;
+}
+
+html.is-arriving .out-panel {
+  visibility: visible;
+}
+
+.out-panel.leaving {
+  transform: rotate(-15deg) translate(100%, 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  transition: transform 1.4s cubic-bezier(0.83, 0, 0.17, 1);
+}
+
+/* Home theme. */
+.transition-panel[data-transition-theme="home"] {
+  background: rgba(0, 0, 0, 0.52);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.transition-panel.covering[data-transition-theme="home"] {
+  background: rgba(0, 0, 0, 1);
+}
+
+.out-panel[data-transition-theme="home"] {
+  background: rgba(0, 0, 0, 1);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+}
+
+.out-panel.leaving[data-transition-theme="home"] {
+  background: rgba(0, 0, 0, 0.52);
+}
+
+body[data-page-theme="home"] .loader {
+  background: #000000;
+}
+
+/* Nodal hub theme. */
+.transition-panel[data-transition-theme="nodal-hub"] {
+  background: rgba(235, 246, 250, 0.58);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.transition-panel.covering[data-transition-theme="nodal-hub"] {
+  background: rgba(235, 246, 250, 1);
+}
+
+.out-panel[data-transition-theme="nodal-hub"] {
+  background: rgba(235, 246, 250, 1);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+}
+
+.out-panel.leaving[data-transition-theme="nodal-hub"] {
+  background: rgba(235, 246, 250, 0.58);
+}
+
+body[data-page-theme="nodal-hub"] .loader {
+  background: #ebf6fa;
+}
+
+/* Preserved OUT visuals; existing JavaScript controls arrival. */
+html.is-arriving .out-panel[data-transition-theme="home"].leaving {
+  animation: out-home-visual 1.4s linear forwards;
+}
+
+html.is-arriving .out-panel[data-transition-theme="nodal-hub"].leaving {
+  animation: out-hub-visual 1.4s linear forwards;
+}
+
+@keyframes out-home-visual {
+  0%, 50% {
+    background-color: rgba(0, 0, 0, 1);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+
+  100% {
+    background-color: rgba(0, 0, 0, 0.52);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+}
+
+@keyframes out-hub-visual {
+  0%, 50% {
+    background-color: rgba(235, 246, 250, 1);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+
+  100% {
+    background-color: rgba(235, 246, 250, 0.58);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+}
