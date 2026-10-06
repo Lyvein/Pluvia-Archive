@@ -363,41 +363,65 @@ initSparks('sparks');
           order: Math.random(),
           x: Math.random(),
           y: Math.random(),
-          orbits: Array.from({ length: 6 }, () => Math.random())
+          orbits: Array.from(
+              { length: Math.random() < 0.5 ? 2 : 3 },
+              () => ({
+                size: Math.random(),
+                angle: Math.random(),
+                offset: Math.random(),
+                dashed: Math.random() < 0.5
+              })
+            )
         });
       }
       const orbitSeed = seeds.get(node).orbits;
+        const orbitDot = node.querySelector('.node-dot');
 
-        const orbit1 = compact
-          ? 100 + orbitSeed[0] * 160
-          : 180 + orbitSeed[0] * 320;
+        if (orbitDot) {
+          let rings = [...orbitDot.querySelectorAll('.node-orbit')];
 
-        const orbit2 = compact
-          ? 150 + orbitSeed[1] * 180
-          : 260 + orbitSeed[1] * 380;
+          if (rings.length !== orbitSeed.length) {
+            rings.forEach(ring => ring.remove());
 
-        node.style.setProperty('--orbit-1-size', orbit1 + 'px');
-        node.style.setProperty('--orbit-2-size', orbit2 + 'px');
+            rings = orbitSeed.map(() => {
+              const ring = document.createElement('span');
 
-        node.style.setProperty(
-          '--orbit-1-x',
-          ((orbitSeed[2] - 0.5) * orbit1 * 0.7) + 'px'
-        );
+              ring.className = 'node-orbit';
+              ring.setAttribute('aria-hidden', 'true');
 
-        node.style.setProperty(
-          '--orbit-1-y',
-          ((orbitSeed[3] - 0.5) * orbit1 * 0.7) + 'px'
-        );
+              orbitDot.appendChild(ring);
+              return ring;
+            });
+          }
 
-        node.style.setProperty(
-          '--orbit-2-x',
-          ((orbitSeed[4] - 0.5) * orbit2 * 0.7) + 'px'
-        );
+          orbitSeed.forEach((orbit, index) => {
+            const size = compact
+              ? 100 + orbit.size * 220
+              : 160 + orbit.size * 480;
 
-        node.style.setProperty(
-          '--orbit-2-y',
-          ((orbitSeed[5] - 0.5) * orbit2 * 0.7) + 'px'
-        );
+            // Separate directions give each circle a different centre.
+            const angle =
+              (index / orbitSeed.length) * Math.PI * 2 +
+              orbit.angle * 0.8;
+
+            const offset = size * (0.15 + orbit.offset * 0.2);
+            const ring = rings[index];
+
+            ring.style.setProperty('--orbit-size', size + 'px');
+
+            ring.style.setProperty(
+              '--orbit-x',
+              Math.cos(angle) * offset + 'px'
+            );
+
+            ring.style.setProperty(
+              '--orbit-y',
+              Math.sin(angle) * offset + 'px'
+            );
+
+            ring.classList.toggle('is-dashed', orbit.dashed);
+          });
+        }
 
       const label = node.querySelector('.node-label');
 
@@ -688,29 +712,67 @@ initSparks('sparks');
         degrees[b]++;
       }
 
-      // Ensure that every node belongs to one network.
-      const connected = new Set([0]);
+      // Start with a closed loop: every node gets two connections.
+        if (points.length === 2) {
+          addEdge(0, 1);
+        } else if (points.length >= 3) {
+          const tour = [0];
 
-      while (connected.size < points.length) {
-        let best = null;
-        let bestLength = Infinity;
+          const remaining = new Set(
+            points.map((_, index) => index).slice(1)
+          );
 
-        for (const a of connected) {
-          points.forEach((point, b) => {
-            if (connected.has(b)) return;
+          while (remaining.size) {
+            const last = tour[tour.length - 1];
 
-            const distance = length(a, b);
+            let next = null;
+            let nearest = Infinity;
 
-            if (distance < bestLength) {
-              bestLength = distance;
-              best = [a, b];
+            for (const candidate of remaining) {
+              const distance = length(last, candidate);
+
+              if (distance < nearest) {
+                nearest = distance;
+                next = candidate;
+              }
             }
+
+            tour.push(next);
+            remaining.delete(next);
+          }
+
+          // Shorten the loop and untangle crossing connections.
+          let improved = true;
+
+          while (improved) {
+            improved = false;
+
+            for (let i = 0; i < tour.length - 2; i++) {
+              for (let j = i + 2; j < tour.length; j++) {
+                if (i === 0 && j === tour.length - 1) continue;
+
+                const a = tour[i];
+                const b = tour[i + 1];
+                const c = tour[j];
+                const d = tour[(j + 1) % tour.length];
+
+                if (
+                  length(a, c) + length(b, d) <
+                  length(a, b) + length(c, d) - 0.001
+                ) {
+                  const reversed = tour.slice(i + 1, j + 1).reverse();
+
+                  tour.splice(i + 1, reversed.length, ...reversed);
+                  improved = true;
+                }
+              }
+            }
+          }
+
+          tour.forEach((a, index) => {
+            addEdge(a, tour[(index + 1) % tour.length]);
           });
         }
-
-        addEdge(...best);
-        connected.add(best[1]);
-      }
 
       function orientation(a, b, c) {
         return (
@@ -762,7 +824,15 @@ initSparks('sparks');
       const EXTRA_LINKS_PER_NODE = 1.3;
 
       // Stop adding extra links to busy nodes.
-      const MAX_CONNECTIONS = 6;
+      const MAX_CONNECTIONS = 4;
+
+        // Each node gets a random connection limit between two and four.
+        const connectionLimits = boxes.map(box =>
+          Math.min(
+            MAX_CONNECTIONS,
+            2 + Math.floor(box.seed.x * 3)
+          )
+        );
 
       const extraBudget = Math.ceil(
         points.length * EXTRA_LINKS_PER_NODE
@@ -800,8 +870,8 @@ initSparks('sparks');
 
           if (
             linked.has(edgeKey(a, b)) ||
-            degrees[a] >= MAX_CONNECTIONS ||
-            degrees[b] >= MAX_CONNECTIONS ||
+            degrees[a] >= connectionLimits[a] ||
+            degrees[b] >= connectionLimits[b] ||
             crossesExisting(a, b)
           ) {
             continue;
