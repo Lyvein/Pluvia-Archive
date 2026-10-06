@@ -1213,30 +1213,39 @@ function isTouchInteraction() {
   }
 
   function focusNode(node) {
-    if (!node || returning || activeNode) return;
+      if (!node || returning || activeNode) return;
 
-    clearTimeout(hoverTimer);
-    clearTimeout(labelTimer);
-    clearTimeout(resetTimer);
+      clearTimeout(hoverTimer);
+      clearTimeout(labelTimer);
+      clearTimeout(resetTimer);
 
-    activeNode = node;
+      activeNode = node;
 
-    activeNode.classList.remove('is-label-visible');
-    activeNode.classList.add('is-camera-target');
+      node.classList.remove('is-label-visible', 'is-hover-ready');
+      node.classList.add('is-camera-target');
 
-    canvas.classList.add('is-node-focused');
-    backButton.classList.add('is-visible');
+      canvas.classList.add('is-node-focused');
+      backButton.classList.add('is-visible');
 
-    positionCamera();
+      positionCamera();
 
-    // Reveal text only after the node camera has finished moving.
-    labelTimer = setTimeout(() => {
-      if (activeNode !== node) return;
+      // First, complete the camera zoom.
+      labelTimer = setTimeout(() => {
+        if (activeNode !== node) return;
 
-      positionLabel(getNodePosition(node));
-      node.classList.add('is-label-visible');
-    }, reducedMotion() ? 0 : CAMERA_DURATION);
-  }
+        positionLabel(getNodePosition(node));
+
+        // Then slide the label into view.
+        node.classList.add('is-label-visible');
+
+        // Enable the extra hover zoom after the label finishes sliding.
+        labelTimer = setTimeout(() => {
+          if (activeNode !== node) return;
+
+          node.classList.add('is-hover-ready');
+        }, reducedMotion() ? 0 : 700);
+      }, reducedMotion() ? 0 : CAMERA_DURATION);
+    }
 
   function resetCamera() {
     clearTimeout(hoverTimer);
@@ -1253,7 +1262,8 @@ function isTouchInteraction() {
 
     previousNode.classList.remove(
       'is-label-visible',
-      'is-camera-target'
+      'is-camera-target',
+      'is-hover-ready'
     );
 
     canvas.classList.remove('is-node-focused');
