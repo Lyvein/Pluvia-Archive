@@ -245,9 +245,10 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   min-height: 100vh;
   overflow: hidden;
   background: #F2FCFF;
-  --node-color: #2746F5;
-  --node-label-color: #1B36CC;
-  --orbit-color: rgba(39, 70, 245, 0.8);
+  --node-color: #9BDCF2;
+  --node-label-color: #90D0FC;
+  --node-stroke-color: #9BDCF2;
+  --orbit-color: #9BCEF2;
   --line-glow-color: rgba(39, 70, 245, 0.25);
   --hub-background: url("images/1blue_horizontal.png");
   --background-zoom: 1.12;
@@ -262,12 +263,13 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
 
 /* Appearance settings for the randomly selected green hub. */
 html[data-hub-variant="green"] .nodal_hub-page {
-  --node-color: rgb(0, 255, 54);
-  --node-label-color: #006616;
+  --node-color: #24D14C;
+  --node-label-color: #003D0D;
   --node-hover-color: rgb(0, 176, 34);
-  --orbit-color: rgba(0, 255, 54, 0.8);
+  --node-stroke-color: #003D0D;
+  --orbit-color: #003D0D;
   --line-glow-color: rgba(0, 255, 54, 0.25);
-  --hub-background: url("images/manifold1.jpeg");
+  --hub-background: url("images/manifold.jpeg");
   --background-zoom: 1.2;
   --node-opacity: 0.92;
   --hub-nav-color: #006616;
@@ -561,7 +563,7 @@ html[data-hub-variant="green"] .node-camera-back:focus-visible {
 
 .node-network line {
   vector-effect: none;
-  stroke: var(--node-color);
+  stroke: var(--node-stroke-color);
   stroke-width: 1.5;
   filter: none;
 }
