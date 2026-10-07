@@ -1664,31 +1664,55 @@ function isTouchInteraction() {
     }
 
   function animate(time) {
-    frame = 0;
+      frame = 0;
 
-    const elapsed = previousTime === null
-      ? 0
-      : Math.min((time - previousTime) / 1000, 0.05);
+      const frameInterval = 1000 / 24;
 
-    previousTime = time;
+      if (
+        previousTime !== null &&
+        time - previousTime < frameInterval
+      ) {
+        if (!motionPreference.matches && !document.hidden) {
+          frame = requestAnimationFrame(animate);
+        }
+        return;
+      }
 
-    const paused =
-      pointerPaused ||
-      keyboardPaused ||
-      document.hidden ||
-      canvas.classList.contains('is-node-focused') ||
-      canvas.classList.contains('is-camera-returning');
+      const elapsed = previousTime === null
+        ? 0
+        : Math.min((time - previousTime) / 1000, 0.1);
 
-    if (!paused) {
-      clock += elapsed;
-      draw();
+      previousTime = time;
+
+      const paused =
+        pointerPaused ||
+        keyboardPaused ||
+        document.hidden ||
+        !document.hasFocus() ||
+        canvas.classList.contains('is-node-focused') ||
+        canvas.classList.contains('is-camera-returning');
+
+      if (!paused) {
+        clock += elapsed;
+        draw();
+      }
+
+      if (
+        !motionPreference.matches &&
+        !document.hidden &&
+        document.hasFocus()
+      ) {
+        frame = requestAnimationFrame(animate);
+      }
     }
 
-    if (!motionPreference.matches && !document.hidden) {
-      frame = requestAnimationFrame(animate);
-    }
-  }
+  window.addEventListener('blur', () => {
+      cancelAnimationFrame(frame);
+      frame = 0;
+      previousTime = null;
+    });
 
+    window.addEventListener('focus', start);
   function start() {
     if (!frame && !motionPreference.matches && !document.hidden) {
       previousTime = null;

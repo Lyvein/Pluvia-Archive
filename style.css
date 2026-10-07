@@ -563,7 +563,7 @@ html[data-hub-variant="green"] .node-camera-back:focus-visible {
   vector-effect: none;
   stroke: var(--node-color);
   stroke-width: 1.5;
-  filter: drop-shadow(0 0 3px var(--line-glow-color));
+  filter: none;
 }
 
 .lyvein-kv.is-node-focused .lyvein-node {
