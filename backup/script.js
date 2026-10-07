@@ -413,7 +413,7 @@ initSparks('sparks');
     );
 
     const margin = Math.min(32, width * 0.05);
-    const gap = 24;
+    const gap = 48;
 
     // Measure room for each node, its number, and its label.
     const boxes = nodes.map(node => {
@@ -732,6 +732,20 @@ initSparks('sparks');
       box.node.style.left = x + 'px';
       box.node.style.top = y + 'px';
 
+      box.node.style.removeProperty('translate');
+      box.node.driftOffsetX = 0;
+      box.node.driftOffsetY = 0;
+
+      box.node.driftBase = {
+          x,
+          y,
+          dotOffset: box.dotOffset,
+          minX: regionLeft + margin + box.left,
+          maxX: regionRight - margin - box.right,
+          minY: regionTop + box.above,
+          maxY: regionBottom - box.below
+        };
+
       points.push({
         x: x + box.dotOffset,
         y
@@ -990,9 +1004,12 @@ initSparks('sparks');
           );
         }
 
+        line.networkNodeA = boxes[a].node;
+        line.networkNodeB = boxes[b].node;
         network.appendChild(line);
       });
     }
+    canvas.dispatchEvent(new Event('network-layout'));
   }
 
   // =======================================================
@@ -1185,8 +1202,11 @@ function isTouchInteraction() {
       : node.offsetHeight / 2;
 
     return {
-      x: node.offsetLeft + localX - node.offsetWidth / 2,
-      y: node.offsetTop + localY - node.offsetHeight / 2,
+      x: node.offsetLeft + localX - node.offsetWidth / 2 +
+        (node.driftOffsetX || 0),
+
+      y: node.offsetTop + localY - node.offsetHeight / 2 +
+        (node.driftOffsetY || 0),
 
       localX,
       localY,
@@ -1400,6 +1420,7 @@ function isTouchInteraction() {
 
     activeNode = null;
     returning = true;
+    canvas.classList.add('is-camera-returning');
 
     previousNode.classList.remove(
       'is-label-visible',
@@ -1420,6 +1441,7 @@ function isTouchInteraction() {
     // Ignore hover events caused by the returning camera.
     resetTimer = setTimeout(() => {
       returning = false;
+      canvas.classList.remove('is-camera-returning');
     }, reducedMotion() ? 0 : CAMERA_DURATION + 100);
   }
 
@@ -1533,4 +1555,200 @@ function isTouchInteraction() {
     childList: true,
     subtree: true
   });
+})();
+
+// =========================================================
+// GENTLE NETWORK DRIFT
+// =========================================================
+(() => {
+  const canvas = document.querySelector('.lyvein-kv');
+  if (!canvas) return;
+
+  const motionPreference = window.matchMedia(
+    '(prefers-reduced-motion: reduce)'
+  );
+
+  const seeds = new WeakMap();
+
+  let nodes = [];
+  let lines = [];
+  let clock = 0;
+  let previousTime = null;
+  let frame = 0;
+  let pointerPaused = false;
+  let keyboardPaused = false;
+
+  function collect() {
+    nodes = [...canvas.querySelectorAll('.lyvein-node')]
+      .filter(node => node.driftBase);
+
+    lines = [...canvas.querySelectorAll('.node-network line')];
+
+    nodes.forEach(node => {
+      if (!seeds.has(node)) {
+        seeds.set(node, {
+          phaseX: Math.random() * Math.PI * 2,
+          phaseY: Math.random() * Math.PI * 2,
+          speedX: 0.36 + Math.random() * 0.6,
+          speedY: 0.6 + Math.random() * 0.6
+        });
+      }
+    });
+
+    clock = 0;
+    previousTime = null;
+  }
+
+  function draw() {
+      const distance = canvas.clientWidth <= 768 ? 12 : 20;
+
+      nodes.forEach(node => {
+        const base = node.driftBase;
+        const seed = seeds.get(node);
+
+        const dx = motionPreference.matches ? 0 : distance * (
+          Math.sin(clock * seed.speedX + seed.phaseX) -
+          Math.sin(seed.phaseX)
+        ) / 2;
+
+        const dy = motionPreference.matches ? 0 : distance * (
+          Math.sin(clock * seed.speedY + seed.phaseY) -
+          Math.sin(seed.phaseY)
+        ) / 2;
+
+        const offsetX = Math.max(
+          base.minX,
+          Math.min(base.maxX, base.x + dx)
+        ) - base.x;
+
+        const offsetY = Math.max(
+          base.minY,
+          Math.min(base.maxY, base.y + dy)
+        ) - base.y;
+
+        node.driftOffsetX = offsetX;
+        node.driftOffsetY = offsetY;
+
+        // Move the complete node without changing its layout position.
+        node.style.translate = offsetX + 'px ' + offsetY + 'px';
+      });
+
+      lines.forEach(line => {
+        const a = line.networkNodeA;
+        const b = line.networkNodeB;
+
+        if (!a || !b) return;
+
+        line.setAttribute(
+          'x1',
+          a.driftBase.x + (a.driftOffsetX || 0) +
+          a.driftBase.dotOffset
+        );
+
+        line.setAttribute(
+          'y1',
+          a.driftBase.y + (a.driftOffsetY || 0)
+        );
+
+        line.setAttribute(
+          'x2',
+          b.driftBase.x + (b.driftOffsetX || 0) +
+          b.driftBase.dotOffset
+        );
+
+        line.setAttribute(
+          'y2',
+          b.driftBase.y + (b.driftOffsetY || 0)
+        );
+      });
+    }
+
+  function animate(time) {
+    frame = 0;
+
+    const elapsed = previousTime === null
+      ? 0
+      : Math.min((time - previousTime) / 1000, 0.05);
+
+    previousTime = time;
+
+    const paused =
+      pointerPaused ||
+      keyboardPaused ||
+      document.hidden ||
+      canvas.classList.contains('is-node-focused') ||
+      canvas.classList.contains('is-camera-returning');
+
+    if (!paused) {
+      clock += elapsed;
+      draw();
+    }
+
+    if (!motionPreference.matches && !document.hidden) {
+      frame = requestAnimationFrame(animate);
+    }
+  }
+
+  function start() {
+    if (!frame && !motionPreference.matches && !document.hidden) {
+      previousTime = null;
+      frame = requestAnimationFrame(animate);
+    }
+  }
+
+  function findNode(target) {
+    return target instanceof Element
+      ? target.closest('.lyvein-node')
+      : null;
+  }
+
+  canvas.addEventListener('pointerover', event => {
+    if (event.pointerType !== 'touch' && findNode(event.target)) {
+      pointerPaused = true;
+    }
+  });
+
+  canvas.addEventListener('pointerout', event => {
+    if (event.pointerType !== 'touch') {
+      pointerPaused = Boolean(findNode(event.relatedTarget));
+    }
+  });
+
+  canvas.addEventListener('focusin', event => {
+    const node = findNode(event.target);
+    keyboardPaused = Boolean(node && node.matches(':focus-visible'));
+  });
+
+  canvas.addEventListener('focusout', event => {
+    const node = findNode(event.relatedTarget);
+    keyboardPaused = Boolean(node && node.matches(':focus-visible'));
+  });
+
+  canvas.addEventListener('network-layout', collect);
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      cancelAnimationFrame(frame);
+      frame = 0;
+    } else {
+      start();
+    }
+  });
+
+  motionPreference.addEventListener('change', () => {
+    cancelAnimationFrame(frame);
+    frame = 0;
+
+    if (
+      !canvas.classList.contains('is-node-focused') &&
+      !canvas.classList.contains('is-camera-returning')
+    ) {
+      draw();
+    }
+
+    start();
+  });
+
+  collect();
+  start();
 })();
