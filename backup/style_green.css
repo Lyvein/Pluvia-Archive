@@ -83,8 +83,10 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
 .click-fx.ripple {
   width: 12px;
   height: 12px;
-  border: 2px solid #ffffff;
-  box-shadow: 0 0 10px 2px rgba(255,255,255,0.8), 0 0 20px 6px rgba(255,255,255,0.4);
+  border: 2px solid #00FF36;
+  box-shadow:     
+    0 0 10px 2px rgba(0, 255, 54, 0.8),
+    0 0 20px 6px rgba(0, 255, 54, 0.4);
   animation: ripple-out 0.6s ease-out forwards;
 }
 
@@ -92,7 +94,7 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   width: 5px;
   height: 5px;
   background: #ffffff;
-  box-shadow: 0 0 6px 2px rgba(255,255,255,0.8);
+  box-shadow: 0 0 6px 2px rgba(0, 255, 54, 0.8);
   animation: trail-fade 0.5s ease-out forwards;
 }
 
@@ -127,7 +129,7 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   height: 3px;
   border-radius: 50%;
   background: #ffffff;
-  box-shadow: 0 0 6px 2px rgba(255,255,255,0.8);
+  box-shadow: 0 0 6px 2px rgba(0, 255, 54,0.8);
   opacity: 0;
   animation: spark-float linear infinite;
 }
@@ -283,6 +285,29 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   transition: transform 0.9s cubic-bezier(.25, .1, .25, 1);
 }
 
+.node-hover-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transform: scale(1);
+  transition: transform 0.35s cubic-bezier(.2, .8, .2, 1);
+}
+
+.lyvein-kv.is-node-focused:has(
+  .is-camera-target.is-hover-ready:hover
+) .node-hover-layer,
+.lyvein-kv.is-node-focused:has(
+  .is-camera-target.is-hover-ready:focus-visible
+) .node-hover-layer {
+  transform: scale(1.15);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .node-hover-layer {
+    transition: none;
+  }
+}
+
 .node-zoom-layer {
   position: absolute;
   inset: 0;
@@ -314,12 +339,6 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
       transform 0.35s cubic-bezier(.2, .8, .2, 1);
     }
 
-.lyvein-kv.is-node-focused
-.lyvein-node.is-camera-target.is-hover-ready:hover,
-.lyvein-kv.is-node-focused
-.lyvein-node.is-camera-target.is-hover-ready:focus-visible {
-  transform: translate(-50%, -50%) scale(1.15);
-}
 
 .node-number {
   position: absolute;
@@ -486,7 +505,7 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
 }
 
 .lyvein-kv.is-node-focused .lyvein-node {
-  opacity: 0;
+  opacity: 1;
   filter: blur(0px);
   pointer-events: none;
 }
@@ -501,23 +520,7 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   opacity: 1;
 }
 
-.lyvein-kv.is-node-focused:has(
-  .is-camera-target.is-hover-ready:hover
-) .node-network,
-.lyvein-kv.is-node-focused:has(
-  .is-camera-target.is-hover-ready:focus-visible
-) .node-network {
-  transform: scale(1.15);
-}
 
-.lyvein-kv.is-node-focused:has(
-  .is-camera-target.is-hover-ready:hover
-) .node-network line,
-.lyvein-kv.is-node-focused:has(
-  .is-camera-target.is-hover-ready:focus-visible
-) .node-network line {
-  stroke-width: 2;
-}
 
 /* =========================================================
    HUB NAVIGATION AND CAMERA RETURN BUTTON
@@ -751,6 +754,53 @@ html.is-arriving .out-panel[data-transition-theme="nodal-hub"].leaving {
 
   100% {
     background-color: rgba(235, 246, 250, 0.58);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+}
+
+/* Green hub theme: shared across both destination stylesheets. */
+.transition-panel[data-transition-theme="nodal-hub-green"] {
+  background: rgba(155, 189, 151, 0.58);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.transition-panel.covering[data-transition-theme="nodal-hub-green"] {
+  background: rgba(155, 189, 151, 1);
+}
+
+.out-panel[data-transition-theme="nodal-hub-green"] {
+  background: rgba(155, 189, 151, 1);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+}
+
+.out-panel.leaving[data-transition-theme="nodal-hub-green"] {
+  background: rgba(155, 189, 151, 0.58);
+}
+
+body[data-page-theme="nodal-hub-green"] .loader {
+  background: #9BBD97;
+}
+
+html.is-arriving[data-departing-theme="nodal-hub-green"] .loader {
+  background: #9BBD97;
+}
+
+html.is-arriving .out-panel[data-transition-theme="nodal-hub-green"].leaving {
+  animation: out-green-hub-visual 1.4s linear forwards;
+}
+
+@keyframes out-green-hub-visual {
+  0%, 50% {
+    background-color: rgba(155, 189, 151, 1);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+
+  100% {
+    background-color: rgba(155, 189, 151, 0.58);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }

@@ -11,6 +11,15 @@ const loader = document.getElementById('loader');
 const TRANSITION_DURATION = 1400;
 const LOADING_DURATION = 1500;
 
+// Apply the hub appearance chosen before the page renders.
+if (document.body.classList.contains('nodal_hub-page')) {
+  const greenHub =
+    document.documentElement.dataset.hubVariant === 'green';
+
+  document.body.dataset.pageTheme =
+    greenHub ? 'green' : 'blue';
+}
+
 const currentPageTheme = document.body.dataset.pageTheme || 'home';
 const arrivingFromTransition =
   sessionStorage.getItem('siteTransitioning') === '1';
@@ -1035,7 +1044,10 @@ initSparks('sparks');
   if (!hub || !canvas) return;
 
   const NODE_ZOOM = 2.6;
-  const BACKGROUND_ZOOM = 1.12;
+  const BACKGROUND_ZOOM =
+      parseFloat(
+        getComputedStyle(canvas).getPropertyValue('--background-zoom')
+      ) || 1.12;
   const BACKGROUND_MOVEMENT = 0.08;
 
   const CAMERA_DURATION = 800;

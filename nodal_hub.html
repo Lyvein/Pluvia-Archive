@@ -5,6 +5,10 @@
 			<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 		<script>
+            // Select one appearance per visit, before loading the stylesheet.
+            const greenHub = Math.random() >= 0.5;
+            document.documentElement.dataset.hubVariant = greenHub ? 'green' : 'blue';
+
 			if (sessionStorage.getItem('siteTransitioning') === '1') {
 				document.documentElement.classList.add('is-arriving');
 				document.documentElement.dataset.departingTheme =

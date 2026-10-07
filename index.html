@@ -43,22 +43,6 @@
 			<div class="hero-title">Where Wind Pauses</div>
 		</section>
 
-		<script>
-			const lyveinNav = document.getElementById('lyvein-nav');
-
-			lyveinNav.addEventListener('click', () => {
-				const greenHub = Math.random() >= 0.5;
-
-				lyveinNav.setAttribute(
-					'href',
-					greenHub ? 'nodal_hub_green.html' : 'nodal_hub.html'
-				);
-
-				lyveinNav.dataset.targetTheme =
-					greenHub ? 'nodal-hub-green' : 'nodal-hub';
-			}, { capture: true });
-		</script>
-
 		<script src="script.js"></script>
 	</body>
 </html>

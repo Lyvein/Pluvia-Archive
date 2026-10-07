@@ -42,13 +42,26 @@ if (loader && arrivingFromTransition) {
     setPanelTheme(outPanel, departingTheme);
     outPanel.classList.remove('leaving');
 
-    const solidColor = departingTheme === 'nodal-hub'
-      ? 'rgba(235, 246, 250, 1)'
-      : 'rgba(0, 0, 0, 1)';
+    const transitionColors = {
+      home: {
+        solid: 'rgba(0, 0, 0, 1)',
+        translucent: 'rgba(0, 0, 0, 0.52)'
+      },
+      'nodal-hub': {
+        solid: 'rgba(235, 246, 250, 1)',
+        translucent: 'rgba(235, 246, 250, 0.58)'
+      },
+      'nodal-hub-green': {
+        solid: 'rgba(155, 189, 151, 1)',
+        translucent: 'rgba(155, 189, 151, 0.58)'
+      }
+    };
 
-    const translucentColor = departingTheme === 'nodal-hub'
-      ? 'rgba(235, 246, 250, 0.58)'
-      : 'rgba(0, 0, 0, 0.52)';
+    const colors =
+      transitionColors[departingTheme] || transitionColors.home;
+
+    const solidColor = colors.solid;
+    const translucentColor = colors.translucent;
 
     // Prepare the OUT panel as solid and unblurred.
     outPanel.style.animation = 'none';
@@ -1079,20 +1092,29 @@ function isTouchInteraction() {
 
   layer.style.transform = 'translate(0px, 0px) scale(1)';
 
-  function collectNodes() {
-    canvas.querySelectorAll('.lyvein-node').forEach(node => {
-      if (!layer.contains(node)) {
-        layer.appendChild(node);
-      }
-    });
+        // Shared layer for the entire network's extra hover zoom.
+    let hoverLayer = layer.querySelector('.node-hover-layer');
 
-    const network = canvas.querySelector('.node-network');
-
-    if (network && !layer.contains(network)) {
-      layer.appendChild(network);
+    if (!hoverLayer) {
+      hoverLayer = document.createElement('div');
+      hoverLayer.className = 'node-hover-layer';
+      layer.appendChild(hoverLayer);
     }
-  }
 
+
+    function collectNodes() {
+      canvas.querySelectorAll('.lyvein-node').forEach(node => {
+        if (!hoverLayer.contains(node)) {
+          hoverLayer.appendChild(node);
+        }
+      });
+
+      const network = canvas.querySelector('.node-network');
+
+      if (network && !hoverLayer.contains(network)) {
+        hoverLayer.appendChild(network);
+      }
+    }
   collectNodes();
 
   const backButton = document.createElement('button');
@@ -1243,13 +1265,9 @@ function isTouchInteraction() {
 
     const position = getNodePosition(activeNode);
 
-    const network = canvas.querySelector('.node-network');
-
-    if (network) {
-      network.style.transformOrigin =
-        (position.x + 60) + 'px ' +
-        (position.y - 40) + 'px';
-    }
+    hoverLayer.style.transformOrigin =
+      (position.x + 60) + 'px ' +
+      (position.y - 40) + 'px';
 
     // Anchor the zoom at the node's original position.
     const moveX = position.x * (1 - NODE_ZOOM);

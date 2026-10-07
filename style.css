@@ -83,16 +83,16 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
 .click-fx.ripple {
   width: 12px;
   height: 12px;
-  border: 2px solid #ffffff;
-  box-shadow: 0 0 10px 2px rgba(255,255,255,0.8), 0 0 20px 6px rgba(255,255,255,0.4);
+  border: 2px solid var(--click-color, #ffffff);
+  box-shadow: 0 0 10px 2px rgb(var(--click-rgb, 255, 255, 255) / 0.8), 0 0 20px 6px rgb(var(--click-rgb, 255, 255, 255) / 0.4);
   animation: ripple-out 0.6s ease-out forwards;
 }
 
 .click-fx.trail {
   width: 5px;
   height: 5px;
-  background: #ffffff;
-  box-shadow: 0 0 6px 2px rgba(255,255,255,0.8);
+  background: var(--click-color, #ffffff);
+  box-shadow: 0 0 6px 2px rgb(var(--click-rgb, 255, 255, 255) / 0.8);
   animation: trail-fade 0.5s ease-out forwards;
 }
 
@@ -127,7 +127,7 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   height: 3px;
   border-radius: 50%;
   background: #ffffff;
-  box-shadow: 0 0 6px 2px rgba(255,255,255,0.8);
+  box-shadow: 0 0 6px 2px rgb(var(--click-rgb, 255, 255, 255) / 0.8);
   opacity: 0;
   animation: spark-float linear infinite;
 }
@@ -247,6 +247,72 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   background: #F2FCFF;
   --node-color: #2746F5;
   --node-label-color: #1B36CC;
+  --orbit-color: rgba(39, 70, 245, 0.8);
+  --line-glow-color: rgba(39, 70, 245, 0.25);
+  --hub-background: url("images/1blue_horizontal.png");
+  --background-zoom: 1.12;
+  --node-opacity: 1;
+  --hub-nav-color: #B7DEED;
+  --hub-nav-hover-color: #0077A8;
+  --back-background: rgba(220, 234, 242, 0.22);
+  --back-hover-background: rgba(112, 141, 202, 0.22);
+  --back-text-color: #FFFFFF;
+  --back-text-shadow: 0 1px 4px rgba(0, 59, 90, 0.45);
+}
+
+/* Appearance settings for the randomly selected green hub. */
+html[data-hub-variant="green"] .nodal_hub-page {
+  --node-color: rgb(0, 255, 54);
+  --node-label-color: rgb(0, 120, 25);
+  --node-hover-color: rgb(0, 176, 34);
+  --orbit-color: rgba(0, 255, 54, 0.8);
+  --line-glow-color: rgba(0, 255, 54, 0.25);
+  --hub-background: url("images/manifold.jpeg");
+  --background-zoom: 1.2;
+  --node-opacity: 0.92;
+  --hub-nav-color: rgb(88, 115, 95);
+  --hub-nav-hover-color: rgb(14, 79, 29);
+  --back-background: rgba(0, 0, 0, 0.22);
+  --back-hover-background: rgba(0, 0, 0, 0.35);
+  --back-text-color: var(--node-color);
+  --back-text-shadow: 0 0 6px rgba(0, 255, 54, 0.3);
+  --click-color: #00FF36;
+  --click-rgb: 0, 255, 54;
+}
+
+html[data-hub-variant="green"] .node-dot::after {
+  display: none;
+}
+
+html[data-hub-variant="green"] .lyvein-node:hover .node-number,
+html[data-hub-variant="green"] .lyvein-node:focus-visible .node-number,
+html[data-hub-variant="green"] .lyvein-node:hover .node-label,
+html[data-hub-variant="green"] .lyvein-node:focus-visible .node-label,
+html[data-hub-variant="green"] .lyvein-node.is-camera-target .node-number,
+html[data-hub-variant="green"] .lyvein-node.is-camera-target .node-label {
+  color: var(--node-hover-color);
+}
+
+html[data-hub-variant="green"] .node-label {
+  transform-origin: left center;
+}
+
+html[data-hub-variant="green"] .lyvein-node.is-camera-target .node-number {
+  font-size: clamp(21px, 1.014vw, 32.5px);
+}
+
+html[data-hub-variant="green"] .lyvein-node.is-camera-target .node-label {
+  font-size: clamp(25px, 1.3vw, 42px);
+}
+
+html[data-hub-variant="green"] .node-camera-back:focus-visible {
+  background: var(--back-hover-background);
+}
+
+@media (max-width: 768px) {
+  html[data-hub-variant="green"] .lyvein-node.is-camera-target .node-label {
+    font-size: 19.5px;
+  }
 }
 
 .lyvein-hub {
@@ -261,7 +327,7 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   inset: 0;
   isolation: isolate;
 
-  background-image: url("images/1blue_horizontal.png");
+  background-image: var(--hub-background);
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
@@ -358,6 +424,7 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   height: clamp(20px, 1.1vw, 36px);
   border-radius: 50%;
   background: var(--node-color);
+  opacity: var(--node-opacity);
   border: none;
   box-shadow:
     0 0 clamp(6px, 0.35vw, 12px) color-mix(in srgb, var(--node-color) 75%, transparent),
@@ -396,7 +463,7 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   left: calc(50% + var(--orbit-x));
   top: calc(50% + var(--orbit-y));
 
-  border: 4px solid rgba(39, 70, 245, 0.8);
+  border: 4px solid var(--orbit-color);
   border-radius: 50%;
   background: none;
 
@@ -494,9 +561,9 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
 
 .node-network line {
   vector-effect: none;
-  stroke: #2746F5;
+  stroke: var(--node-color);
   stroke-width: 1.5;
-  filter: drop-shadow(0 0 3px rgba(39, 70, 245, 0.25));
+  filter: drop-shadow(0 0 3px var(--line-glow-color));
 }
 
 .lyvein-kv.is-node-focused .lyvein-node {
@@ -520,12 +587,12 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
    ========================================================= */
 
 .nodal_hub-page nav a {
-  color: #B7DEED;
+  color: var(--hub-nav-color);
 }
 
 .nodal_hub-page nav a:hover,
 .nodal_hub-page nav a:focus-visible {
-  color: #0077A8;
+  color: var(--hub-nav-hover-color);
 }
 
 .node-camera-back {
@@ -539,12 +606,12 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   outline: none;
   border-radius: 2px;
 
-  background: rgba(220, 234, 242, 0.22);
+  background: var(--back-background);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
 
-    color: #FFFFFF;
-    text-shadow: 0 1px 4px rgba(0, 59, 90, 0.45);
+    color: var(--back-text-color);
+    text-shadow: var(--back-text-shadow);
 
   font-family: "Saira Extra Condensed", sans-serif;
   font-size: 18px;
@@ -568,7 +635,7 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
 }
 
 .node-camera-back:hover {
-  background: rgba(112, 141, 202, 0.22);
+  background: var(--back-hover-background);
 }
 
 @media (prefers-reduced-motion: reduce) {

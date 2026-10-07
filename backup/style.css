@@ -245,8 +245,8 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   min-height: 100vh;
   overflow: hidden;
   background: #F2FCFF;
-  --node-color: #EBFBFF;
-  --node-label-color: #BDE0F0;
+  --node-color: #2746F5;
+  --node-label-color: #1B36CC;
 }
 
 .lyvein-hub {
@@ -262,89 +262,46 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   isolation: isolate;
 
   background-image: url("images/1blue_horizontal.png");
-  background-size: auto 100%;
-  background-position: right -30vw center;
+  background-size: cover;
+  background-position: center center;
   background-repeat: no-repeat;
 }
 
 .node-camera-background {
-  /* Match your current settings at a 3840px viewport width. */
-  --kv-crop: 13.0208vw;
-  --kv-edge: calc(var(--kv-left, 0px) + var(--kv-crop));
-  --kv-fade-start: 0.78125vw;
-  --kv-fade-end: 5.20833vw;
-  --kv-blur-full: 7.8125vw;
-  --kv-blur-end: 15.625vw;
-  --kv-blur-strength: 1.30208vw;
-
   position: absolute;
   inset: 0;
   width: 100%;
   z-index: -1;
   pointer-events: none;
 
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
 
   transform-origin: center;
   transition: transform 0.9s cubic-bezier(.25, .1, .25, 1);
-
-  clip-path: inset(0 0 0 max(0px, var(--kv-edge)));
-
-  -webkit-mask-image: linear-gradient(
-    to right,
-    transparent var(--kv-edge),
-    rgba(0, 0, 0, 0.05)
-      calc(var(--kv-edge) + var(--kv-fade-start)),
-    black calc(var(--kv-edge) + var(--kv-fade-end))
-  );
-
-  mask-image: linear-gradient(
-    to right,
-    transparent var(--kv-edge),
-    rgba(0, 0, 0, 0.05)
-      calc(var(--kv-edge) + var(--kv-fade-start)),
-    black calc(var(--kv-edge) + var(--kv-fade-end))
-  );
 }
 
-.node-camera-background::after {
-  content: "";
+.node-hover-layer {
   position: absolute;
   inset: 0;
   pointer-events: none;
-
-  background-image: inherit;
-  background-size: inherit;
-  background-position: inherit;
-  background-repeat: inherit;
-
-  filter: blur(var(--kv-blur-strength));
-
-  -webkit-mask-image: linear-gradient(
-    to right,
-    black calc(var(--kv-edge) + var(--kv-blur-full)),
-    transparent calc(var(--kv-edge) + var(--kv-blur-end))
-  );
-
-  mask-image: linear-gradient(
-    to right,
-    black calc(var(--kv-edge) + var(--kv-blur-full)),
-    transparent calc(var(--kv-edge) + var(--kv-blur-end))
-  );
+  transform: scale(1);
+  transition: transform 0.35s cubic-bezier(.2, .8, .2, 1);
 }
 
-@media (orientation: portrait) {
-  .lyvein-kv,
-  .node-camera-background {
-    background-position: center center;
-  }
+.lyvein-kv.is-node-focused:has(
+  .is-camera-target.is-hover-ready:hover
+) .node-hover-layer,
+.lyvein-kv.is-node-focused:has(
+  .is-camera-target.is-hover-ready:focus-visible
+) .node-hover-layer {
+  transform: scale(1.15);
+}
 
-  .node-camera-background {
-    --kv-crop: 0px;
-    --kv-fade-start: 2vw;
-    --kv-fade-end: 10vw;
-    --kv-blur-full: 12vw;
-    --kv-blur-end: 24vw;
-    --kv-blur-strength: 2vw;
+@media (prefers-reduced-motion: reduce) {
+  .node-hover-layer {
+    transition: none;
   }
 }
 
@@ -369,11 +326,18 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   gap: 9px;
   padding: 14px;
   text-decoration: none;
-  transform: translate(-50%, -50%);
   cursor: pointer;
   pointer-events: auto;
-  transition: opacity 0.35s ease, filter 0.45s ease;
+
+  transform: translate(-50%, -50%);
+  transform-origin: calc(50% + 60px) calc(50% - 40px);
+
+  transition:
+    opacity 0.35s ease,
+    filter 0.45s ease,
+    transform 0.35s cubic-bezier(.2, .8, .2, 1);
 }
+
 
 .node-number {
   position: absolute;
@@ -415,18 +379,45 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   border-radius: 50%;
   background: radial-gradient(
     circle at center,
-    color-mix(in srgb, var(--node-color) 68%, #5EAED0) 0%,
-    color-mix(in srgb, var(--node-color) 82%, #79BDD8) 34%,
+    color-mix(in srgb, var(--node-color) 68%, #2746F5) 0%,
+    color-mix(in srgb, var(--node-color) 82%, #2746F5) 34%,
     color-mix(in srgb, var(--node-color) 94%, white) 72%,
     color-mix(in srgb, var(--node-color) 82%, white) 100%
   );
   transition: opacity 0.35s ease, transform 0.35s ease;
 }
 
+.node-orbit {
+  position: absolute;
+  box-sizing: border-box;
+  width: var(--orbit-size);
+  height: var(--orbit-size);
+
+  left: calc(50% + var(--orbit-x));
+  top: calc(50% + var(--orbit-y));
+
+  border: 4px solid rgba(39, 70, 245, 0.8);
+  border-radius: 50%;
+  background: none;
+
+  opacity: 0.65;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.35s ease;
+}
+
+.node-orbit.is-dashed {
+  border-style: dashed;
+}
+
+.lyvein-node:hover .node-orbit,
+.lyvein-node:focus-visible .node-orbit {
+  opacity: 0.85;
+}
+
 /* Keep the dot's hover glow; hovering does not reveal text. */
 .lyvein-node:hover .node-dot,
 .lyvein-node:focus-visible .node-dot {
-  transform: scale(1.15);
   box-shadow:
     0 0 clamp(8px, 0.45vw, 15px) color-mix(in srgb, var(--node-color) 95%, transparent),
     0 0 clamp(16px, 0.9vw, 30px) color-mix(in srgb, var(--node-color) 45%, transparent);
@@ -435,7 +426,6 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
 .lyvein-node:hover .node-dot::after,
 .lyvein-node:focus-visible .node-dot::after {
   opacity: 0.7;
-  transform: scale(1.15);
 }
 
 .lyvein-node:hover .node-number,
@@ -489,18 +479,28 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   z-index: 1;
   pointer-events: none;
   overflow: visible;
-  transition: opacity 0.5s ease;
+
+  transform: scale(1);
+
+  transition:
+    opacity 0.5s ease,
+    transform 0.35s cubic-bezier(.2, .8, .2, 1);
 }
 
+.lyvein-kv.is-node-focused .node-network {
+  opacity: 1;
+}
+
+
 .node-network line {
-  vector-effect: non-scaling-stroke;
-  stroke: rgba(143, 213, 237, 0.5);
-  stroke-width: 1;
-  filter: drop-shadow(0 0 3px rgba(199, 237, 247, 0.35));
+  vector-effect: none;
+  stroke: #2746F5;
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 3px rgba(39, 70, 245, 0.25));
 }
 
 .lyvein-kv.is-node-focused .lyvein-node {
-  opacity: 0;
+  opacity: 1;
   filter: blur(0px);
   pointer-events: none;
 }
@@ -512,7 +512,7 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
 }
 
 .lyvein-kv.is-node-focused .node-network {
-  opacity: 0;
+  opacity: 1;
 }
 
 /* =========================================================
@@ -539,11 +539,13 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
   outline: none;
   border-radius: 2px;
 
-  background: rgba(130, 160, 180, 0.2);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  background: rgba(220, 234, 242, 0.22);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
 
-  color: #0077A8;
+    color: #FFFFFF;
+    text-shadow: 0 1px 4px rgba(0, 59, 90, 0.45);
+
   font-family: "Saira Extra Condensed", sans-serif;
   font-size: 18px;
   letter-spacing: 0.08em;
@@ -566,7 +568,7 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
 }
 
 .node-camera-back:hover {
-  background: rgba(220, 234, 242, 0.22);
+  background: rgba(112, 141, 202, 0.22);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -747,4 +749,60 @@ html.is-arriving .out-panel[data-transition-theme="nodal-hub"].leaving {
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }
+}
+
+/* Green hub theme: shared across both destination stylesheets. */
+.transition-panel[data-transition-theme="nodal-hub-green"] {
+  background: rgba(155, 189, 151, 0.58);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.transition-panel.covering[data-transition-theme="nodal-hub-green"] {
+  background: rgba(155, 189, 151, 1);
+}
+
+.out-panel[data-transition-theme="nodal-hub-green"] {
+  background: rgba(155, 189, 151, 1);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+}
+
+.out-panel.leaving[data-transition-theme="nodal-hub-green"] {
+  background: rgba(155, 189, 151, 0.58);
+}
+
+body[data-page-theme="nodal-hub-green"] .loader {
+  background: #9BBD97;
+}
+
+html.is-arriving[data-departing-theme="nodal-hub-green"] .loader {
+  background: #9BBD97;
+}
+
+html.is-arriving .out-panel[data-transition-theme="nodal-hub-green"].leaving {
+  animation: out-green-hub-visual 1.4s linear forwards;
+}
+
+@keyframes out-green-hub-visual {
+  0%, 50% {
+    background-color: rgba(155, 189, 151, 1);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+
+  100% {
+    background-color: rgba(155, 189, 151, 0.58);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+}
+
+/* Direct Home visit: show the loader before the page's first paint. */
+html.is-initial-loading .loader {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  background: #000000;
+  transition: none;
 }
