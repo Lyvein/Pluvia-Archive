@@ -30,6 +30,12 @@
 </head>
 
 	<body class="nodal_hub-page" data-page-theme="nodal-hub">
+    <script>
+      document.body.dataset.pageTheme =
+        document.documentElement.dataset.hubVariant === 'green'
+          ? 'nodal-hub-green'
+          : 'nodal-hub';
+    </script>
 
 		<nav>
 			<a href="index.html" data-target-theme="home">Home</a>
@@ -78,25 +84,32 @@
 					<span class="node-label">Northern</span>
 				</a>
 
-				<!-- 04 — Unknown -->
-				<a class="lyvein-node node-unknown" href="unknown.html" aria-label="Unknown">
+				<!-- 04 — Magic -->
+				<a class="lyvein-node node-magic" href="magic.html" aria-label="magic">
 					<span class="node-number">04</span>
+					<span class="node-dot"></span>
+					<span class="node-label">Magic</span>
+				</a>
+
+				<!-- 05 — Record -->
+				<a class="lyvein-node node-Record" href="record.html" aria-label="Record">
+					<span class="node-number">05</span>
+					<span class="node-dot"></span>
+					<span class="node-label">R■■ord</span>
+				</a>
+
+				<!-- 06 — Unknown -->
+				<a class="lyvein-node node-ellipsis" href="unknown.html" aria-label="More">
+					<span class="node-number">06</span>
 					<span class="node-dot"></span>
 					<span class="node-label">???</span>
 				</a>
 
-				<!-- 05 — ... -->
+				<!-- 07 — ... -->
 				<a class="lyvein-node node-ellipsis" href="more.html" aria-label="More">
-					<span class="node-number">05</span>
+					<span class="node-number">07</span>
 					<span class="node-dot"></span>
 					<span class="node-label">...</span>
-				</a>
-
-				<!-- 06 — ... -->
-				<a class="lyvein-node node-magic" href="magic.html" aria-label="magic">
-					<span class="node-number">06</span>
-					<span class="node-dot"></span>
-					<span class="node-label">Magic</span>
 				</a>
 
 			</div>

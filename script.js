@@ -11,22 +11,46 @@ const loader = document.getElementById('loader');
 const TRANSITION_DURATION = 1400;
 const LOADING_DURATION = 1500;
 
-// Apply the hub appearance chosen before the page renders.
-if (document.body.classList.contains('nodal_hub-page')) {
-  const greenHub =
-    document.documentElement.dataset.hubVariant === 'green';
+// Resolve the theme from the selected hub appearance.
+function getCurrentPageTheme() {
+  if (document.body.classList.contains('nodal_hub-page')) {
+    return document.documentElement.dataset.hubVariant === 'green'
+      ? 'nodal-hub-green'
+      : 'nodal-hub';
+  }
 
-  document.body.dataset.pageTheme =
-    greenHub ? 'green' : 'blue';
+  return document.body.dataset.pageTheme || 'home';
 }
 
-const currentPageTheme = document.body.dataset.pageTheme || 'home';
+const currentPageTheme = getCurrentPageTheme();
+document.body.dataset.pageTheme = currentPageTheme;
+
+const transitionColors = {
+  home: {
+    solid: 'rgba(0, 0, 0, 1)',
+    translucent: 'rgba(0, 0, 0, 0.52)'
+  },
+  'nodal-hub': {
+    solid: 'rgba(235, 246, 250, 1)',
+    translucent: 'rgba(235, 246, 250, 0.58)'
+  },
+  'nodal-hub-green': {
+    solid: 'rgba(155, 189, 151, 1)',
+    translucent: 'rgba(155, 189, 151, 0.58)'
+  }
+};
+
 const arrivingFromTransition =
   sessionStorage.getItem('siteTransitioning') === '1';
 
 function setPanelTheme(element, theme) {
   if (!element) return;
+
+  const colors = transitionColors[theme] || transitionColors.home;
+
   element.dataset.transitionTheme = theme;
+  element.style.setProperty('--transition-solid', colors.solid);
+  element.style.setProperty('--transition-translucent', colors.translucent);
 }
 
 function forceReflow(element) {
@@ -44,27 +68,12 @@ if (loader && arrivingFromTransition) {
   const departingTheme =
     sessionStorage.getItem('departingTheme') || 'home';
 
-  loader.dataset.transitionTheme = departingTheme;
+  setPanelTheme(loader, departingTheme);
   loader.classList.add('active');
 
   if (outPanel) {
     setPanelTheme(outPanel, departingTheme);
     outPanel.classList.remove('leaving');
-
-    const transitionColors = {
-      home: {
-        solid: 'rgba(0, 0, 0, 1)',
-        translucent: 'rgba(0, 0, 0, 0.52)'
-      },
-      'nodal-hub': {
-        solid: 'rgba(235, 246, 250, 1)',
-        translucent: 'rgba(235, 246, 250, 0.58)'
-      },
-      'nodal-hub-green': {
-        solid: 'rgba(155, 189, 151, 1)',
-        translucent: 'rgba(155, 189, 151, 0.58)'
-      }
-    };
 
     const colors =
       transitionColors[departingTheme] || transitionColors.home;
@@ -266,7 +275,7 @@ document.querySelectorAll('nav a').forEach((link) => {
 
       setTimeout(() => {
         if (loader) {
-          loader.dataset.transitionTheme = currentPageTheme;
+          setPanelTheme(loader, currentPageTheme);
           loader.classList.add('active');
         }
 
