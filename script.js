@@ -42,13 +42,26 @@ if (loader && arrivingFromTransition) {
     setPanelTheme(outPanel, departingTheme);
     outPanel.classList.remove('leaving');
 
-    const solidColor = departingTheme === 'nodal-hub'
-      ? 'rgba(235, 246, 250, 1)'
-      : 'rgba(0, 0, 0, 1)';
+    const transitionColors = {
+      home: {
+        solid: 'rgba(0, 0, 0, 1)',
+        translucent: 'rgba(0, 0, 0, 0.52)'
+      },
+      'nodal-hub': {
+        solid: 'rgba(235, 246, 250, 1)',
+        translucent: 'rgba(235, 246, 250, 0.58)'
+      },
+      'nodal-hub-green': {
+        solid: 'rgba(155, 189, 151, 1)',
+        translucent: 'rgba(155, 189, 151, 0.58)'
+      }
+    };
 
-    const translucentColor = departingTheme === 'nodal-hub'
-      ? 'rgba(235, 246, 250, 0.58)'
-      : 'rgba(0, 0, 0, 0.52)';
+    const colors =
+      transitionColors[departingTheme] || transitionColors.home;
+
+    const solidColor = colors.solid;
+    const translucentColor = colors.translucent;
 
     // Prepare the OUT panel as solid and unblurred.
     outPanel.style.animation = 'none';
@@ -326,6 +339,8 @@ initSparks('sparks');
   if (!hub || !canvas) return;
 
   const seeds = new WeakMap();
+  // Choose one side per reload.
+  const regionOnRight = Math.random() < 0.5;
 
   let scheduled = 0;
   let previousSize = '';
@@ -340,7 +355,9 @@ initSparks('sparks');
     if (!width) return;
 
     const compact = width <= 768;
-    const placementWidth = width;
+    const regionLeft = regionOnRight ? width * 0.25 : 0;
+    const regionRight = regionOnRight ? width : width * 0.75;
+    const placementWidth = regionRight - regionLeft;
 
     const nav = document.querySelector('nav');
 
@@ -358,9 +375,66 @@ initSparks('sparks');
         seeds.set(node, {
           order: Math.random(),
           x: Math.random(),
-          y: Math.random()
+          y: Math.random(),
+          orbits: Array.from(
+              { length: Math.random() < 0.5 ? 2 : 3 },
+              () => ({
+                size: Math.random(),
+                angle: Math.random(),
+                offset: Math.random(),
+                dashed: Math.random() < 0.5
+              })
+            )
         });
       }
+      const orbitSeed = seeds.get(node).orbits;
+        const orbitDot = node.querySelector('.node-dot');
+
+        if (orbitDot) {
+          let rings = [...orbitDot.querySelectorAll('.node-orbit')];
+
+          if (rings.length !== orbitSeed.length) {
+            rings.forEach(ring => ring.remove());
+
+            rings = orbitSeed.map(() => {
+              const ring = document.createElement('span');
+
+              ring.className = 'node-orbit';
+              ring.setAttribute('aria-hidden', 'true');
+
+              orbitDot.appendChild(ring);
+              return ring;
+            });
+          }
+
+          orbitSeed.forEach((orbit, index) => {
+            const size = compact
+              ? 100 + orbit.size * 220
+              : 160 + orbit.size * 480;
+
+            // Separate directions give each circle a different centre.
+            const angle =
+              (index / orbitSeed.length) * Math.PI * 2 +
+              orbit.angle * 0.8;
+
+            const offset = size * (0.15 + orbit.offset * 0.2);
+            const ring = rings[index];
+
+            ring.style.setProperty('--orbit-size', size + 'px');
+
+            ring.style.setProperty(
+              '--orbit-x',
+              Math.cos(angle) * offset + 'px'
+            );
+
+            ring.style.setProperty(
+              '--orbit-y',
+              Math.sin(angle) * offset + 'px'
+            );
+
+            ring.classList.toggle('is-dashed', orbit.dashed);
+          });
+        }
 
       const label = node.querySelector('.node-label');
 
@@ -388,19 +462,10 @@ initSparks('sparks');
         node,
         seed: seeds.get(node),
 
-        left: compact
-          ? Math.max(node.offsetWidth / 2, labelWidth / 2)
-          : node.offsetWidth / 2,
-
-        right: compact
-          ? Math.max(node.offsetWidth / 2, labelWidth / 2)
-          : node.offsetWidth / 2 + Math.max(0, labelGap) + labelWidth,
-
+        left: node.offsetWidth / 2,
+        right: node.offsetWidth / 2,
         above: node.offsetHeight / 2 + 28,
-
-        below: compact
-          ? node.offsetHeight / 2 + 8 + labelHeight
-          : node.offsetHeight / 2,
+        below: node.offsetHeight / 2,
 
         dotOffset: dot
           ? dot.offsetLeft + dotWidth / 2 - node.offsetWidth / 2
@@ -438,9 +503,9 @@ initSparks('sparks');
       const rows = Math.ceil(nodes.length / c);
 
       const h = Math.max(
-        viewportHeight - top - margin,
-        rows * cellMinHeight
-      );
+          viewportHeight - top - margin,
+          rows * cellMinHeight
+        );
 
       const cellW = availableWidth / c;
       const cellH = h / rows;
@@ -473,7 +538,9 @@ initSparks('sparks');
       height > viewportHeight ? 'auto' : '';
 
     const cellW = availableWidth / columns;
-    const cellH = (height - top - margin) / rows;
+    const regionTop = top;
+    const regionBottom = height - margin;
+    const cellH = (regionBottom - regionTop) / rows;
 
         const points = [];
 
@@ -493,12 +560,11 @@ initSparks('sparks');
         ...boxes.map(box => box.node.offsetHeight / 2)
       );
 
-      const minX = margin + halfWidth + gap / 2;
-      const maxX =
-        placementWidth - margin - halfWidth - gap / 2;
+    const minX = regionLeft + margin + halfWidth + gap / 2;
+    const maxX = regionRight - margin - halfWidth - gap / 2;
 
-      const minY = top + above + gap / 2;
-      const maxY = height - margin - halfHeight - gap / 2;
+    const minY = regionTop + above + gap / 2;
+    const maxY = regionBottom - halfHeight - gap / 2;
 
       // Keep the random sequence stable during layout updates.
       // Reloading the page creates a new arrangement.
@@ -603,14 +669,14 @@ initSparks('sparks');
         );
 
         x =
-          margin +
+          regionLeft + margin +
           col * cellW +
           left +
           gap / 2 +
           box.seed.x * slackX;
 
         y =
-          top +
+          regionTop +
           row * cellH +
           above +
           gap / 2 +
@@ -659,29 +725,67 @@ initSparks('sparks');
         degrees[b]++;
       }
 
-      // Ensure that every node belongs to one network.
-      const connected = new Set([0]);
+      // Start with a closed loop: every node gets two connections.
+        if (points.length === 2) {
+          addEdge(0, 1);
+        } else if (points.length >= 3) {
+          const tour = [0];
 
-      while (connected.size < points.length) {
-        let best = null;
-        let bestLength = Infinity;
+          const remaining = new Set(
+            points.map((_, index) => index).slice(1)
+          );
 
-        for (const a of connected) {
-          points.forEach((point, b) => {
-            if (connected.has(b)) return;
+          while (remaining.size) {
+            const last = tour[tour.length - 1];
 
-            const distance = length(a, b);
+            let next = null;
+            let nearest = Infinity;
 
-            if (distance < bestLength) {
-              bestLength = distance;
-              best = [a, b];
+            for (const candidate of remaining) {
+              const distance = length(last, candidate);
+
+              if (distance < nearest) {
+                nearest = distance;
+                next = candidate;
+              }
             }
+
+            tour.push(next);
+            remaining.delete(next);
+          }
+
+          // Shorten the loop and untangle crossing connections.
+          let improved = true;
+
+          while (improved) {
+            improved = false;
+
+            for (let i = 0; i < tour.length - 2; i++) {
+              for (let j = i + 2; j < tour.length; j++) {
+                if (i === 0 && j === tour.length - 1) continue;
+
+                const a = tour[i];
+                const b = tour[i + 1];
+                const c = tour[j];
+                const d = tour[(j + 1) % tour.length];
+
+                if (
+                  length(a, c) + length(b, d) <
+                  length(a, b) + length(c, d) - 0.001
+                ) {
+                  const reversed = tour.slice(i + 1, j + 1).reverse();
+
+                  tour.splice(i + 1, reversed.length, ...reversed);
+                  improved = true;
+                }
+              }
+            }
+          }
+
+          tour.forEach((a, index) => {
+            addEdge(a, tour[(index + 1) % tour.length]);
           });
         }
-
-        addEdge(...best);
-        connected.add(best[1]);
-      }
 
       function orientation(a, b, c) {
         return (
@@ -730,10 +834,18 @@ initSparks('sparks');
       }
 
       // Increase this for a denser network.
-      const EXTRA_LINKS_PER_NODE = 0.65;
+      const EXTRA_LINKS_PER_NODE = 1.3;
 
       // Stop adding extra links to busy nodes.
       const MAX_CONNECTIONS = 4;
+
+        // Each node gets a random connection limit between two and four.
+        const connectionLimits = boxes.map(box =>
+          Math.min(
+            MAX_CONNECTIONS,
+            2 + Math.floor(box.seed.x * 3)
+          )
+        );
 
       const extraBudget = Math.ceil(
         points.length * EXTRA_LINKS_PER_NODE
@@ -771,8 +883,8 @@ initSparks('sparks');
 
           if (
             linked.has(edgeKey(a, b)) ||
-            degrees[a] >= MAX_CONNECTIONS ||
-            degrees[b] >= MAX_CONNECTIONS ||
+            degrees[a] >= connectionLimits[a] ||
+            degrees[b] >= connectionLimits[b] ||
             crossesExisting(a, b)
           ) {
             continue;
@@ -815,6 +927,21 @@ initSparks('sparks');
 
         for (const [key, value] of Object.entries(coordinates)) {
           line.setAttribute(key, value);
+        }
+
+        // Random pattern that stays stable when resizing.
+        const linkStyle = (
+          boxes[a].seed.x * 17 +
+          boxes[b].seed.y * 31
+        ) % 1;
+
+        if (linkStyle < 0.45) {
+          const dash = 5 + Math.round(linkStyle * 12);
+
+          line.setAttribute(
+            'stroke-dasharray',
+            dash + ' ' + (dash + 4)
+          );
         }
 
         network.appendChild(line);
@@ -869,7 +996,6 @@ initSparks('sparks');
     subtree: true
   });
 })();
-
 // =========================================================
 // NODE CAMERA — GENTLE ZOOM AND AUTOMATIC LABEL POSITION
 // =========================================================
@@ -965,19 +1091,28 @@ function isTouchInteraction() {
 
   layer.style.transform = 'translate(0px, 0px) scale(1)';
 
-  function collectNodes() {
-    canvas.querySelectorAll('.lyvein-node').forEach(node => {
-      if (!layer.contains(node)) {
-        layer.appendChild(node);
-      }
-    });
+  // Shared layer for the entire network's extra hover zoom.
+    let hoverLayer = layer.querySelector('.node-hover-layer');
 
-    const network = canvas.querySelector('.node-network');
-
-    if (network && !layer.contains(network)) {
-      layer.appendChild(network);
+    if (!hoverLayer) {
+      hoverLayer = document.createElement('div');
+      hoverLayer.className = 'node-hover-layer';
+      layer.appendChild(hoverLayer);
     }
-  }
+
+    function collectNodes() {
+      canvas.querySelectorAll('.lyvein-node').forEach(node => {
+        if (!hoverLayer.contains(node)) {
+          hoverLayer.appendChild(node);
+        }
+      });
+
+      const network = canvas.querySelector('.node-network');
+
+      if (network && !hoverLayer.contains(network)) {
+        hoverLayer.appendChild(network);
+      }
+    }
 
   collectNodes();
 
@@ -1128,6 +1263,9 @@ function isTouchInteraction() {
     if (!activeNode) return;
 
     const position = getNodePosition(activeNode);
+    hoverLayer.style.transformOrigin =
+      (position.x + 60) + 'px ' +
+      (position.y - 40) + 'px';
 
     // Anchor the zoom at the node's original position.
     const moveX = position.x * (1 - NODE_ZOOM);
@@ -1169,30 +1307,37 @@ function isTouchInteraction() {
   }
 
   function focusNode(node) {
-    if (!node || returning || activeNode) return;
+      if (!node || returning || activeNode) return;
 
-    clearTimeout(hoverTimer);
-    clearTimeout(labelTimer);
-    clearTimeout(resetTimer);
+      clearTimeout(hoverTimer);
+      clearTimeout(labelTimer);
+      clearTimeout(resetTimer);
 
-    activeNode = node;
+      activeNode = node;
 
-    activeNode.classList.remove('is-label-visible');
-    activeNode.classList.add('is-camera-target');
+      node.classList.remove('is-label-visible', 'is-hover-ready');
+      node.classList.add('is-camera-target');
 
-    canvas.classList.add('is-node-focused');
-    backButton.classList.add('is-visible');
+      canvas.classList.add('is-node-focused');
+      backButton.classList.add('is-visible');
 
-    positionCamera();
+      positionCamera();
 
-    // Reveal text only after the node camera has finished moving.
-    labelTimer = setTimeout(() => {
-      if (activeNode !== node) return;
+      // Finish the camera movement before revealing the label.
+      labelTimer = setTimeout(() => {
+        if (activeNode !== node) return;
 
-      positionLabel(getNodePosition(node));
-      node.classList.add('is-label-visible');
-    }, reducedMotion() ? 0 : CAMERA_DURATION);
-  }
+        positionLabel(getNodePosition(node));
+        node.classList.add('is-label-visible');
+
+        // Enable hover scaling after the label slides into view.
+        labelTimer = setTimeout(() => {
+          if (activeNode !== node) return;
+
+          node.classList.add('is-hover-ready');
+        }, reducedMotion() ? 0 : 700);
+      }, reducedMotion() ? 0 : CAMERA_DURATION);
+    }
 
   function resetCamera() {
     clearTimeout(hoverTimer);
@@ -1209,7 +1354,8 @@ function isTouchInteraction() {
 
     previousNode.classList.remove(
       'is-label-visible',
-      'is-camera-target'
+      'is-camera-target',
+      'is-hover-ready'
     );
 
     canvas.classList.remove('is-node-focused');
