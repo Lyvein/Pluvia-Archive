@@ -263,15 +263,15 @@ nav a:hover { opacity: 1; color: var(--menu_accent); }
 /* Appearance settings for the randomly selected green hub. */
 html[data-hub-variant="green"] .nodal_hub-page {
   --node-color: rgb(0, 255, 54);
-  --node-label-color: rgb(0, 120, 25);
+  --node-label-color: #006616;
   --node-hover-color: rgb(0, 176, 34);
   --orbit-color: rgba(0, 255, 54, 0.8);
   --line-glow-color: rgba(0, 255, 54, 0.25);
-  --hub-background: url("images/manifold.jpeg");
+  --hub-background: url("images/manifold1.jpeg");
   --background-zoom: 1.2;
   --node-opacity: 0.92;
-  --hub-nav-color: rgb(88, 115, 95);
-  --hub-nav-hover-color: rgb(14, 79, 29);
+  --hub-nav-color: #006616;
+  --hub-nav-hover-color: #00B026;
   --back-background: rgba(0, 0, 0, 0.22);
   --back-hover-background: rgba(0, 0, 0, 0.35);
   --back-text-color: var(--node-color);

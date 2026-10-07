@@ -893,83 +893,79 @@ initSparks('sparks');
         });
       }
 
-      // Increase this for a denser network.
-      const EXTRA_LINKS_PER_NODE = 1.3;
+      const MAX_CONNECTIONS = Math.min(4, points.length - 1);
 
-      // Stop adding extra links to busy nodes.
-      const MAX_CONNECTIONS = 4;
+    // Random targets that stay stable during resizing.
+    const connectionTargets = boxes.map(box =>
+      Math.min(
+        MAX_CONNECTIONS,
+        2 + Math.floor(box.seed.x * 3)
+      )
+    );
 
-        // Each node gets a random connection limit between two and four.
-        const connectionLimits = boxes.map(box =>
-          Math.min(
-            MAX_CONNECTIONS,
-            2 + Math.floor(box.seed.x * 3)
-          )
-        );
+    const candidates = [];
 
-      const extraBudget = Math.ceil(
-        points.length * EXTRA_LINKS_PER_NODE
-      );
+    for (let a = 0; a < points.length; a++) {
+      for (let b = a + 1; b < points.length; b++) {
+        if (!linked.has(edgeKey(a, b))) {
+          candidates.push({
+            a,
+            b,
+            distance: length(a, b)
+          });
+        }
+      }
+    }
 
-      const maxExtraLength =
-        Math.hypot(width, height) * 0.65;
+    while (
+      degrees.some(
+        (degree, index) => degree < connectionTargets[index]
+      )
+    ) {
+      let best = null;
+      let bestScore = Infinity;
 
-      const candidates = [];
+      for (const candidate of candidates) {
+        const { a, b, distance } = candidate;
 
-      for (let a = 0; a < points.length; a++) {
-        for (let b = a + 1; b < points.length; b++) {
-          const distance = length(a, b);
+        if (
+          linked.has(edgeKey(a, b)) ||
+          degrees[a] >= MAX_CONNECTIONS ||
+          degrees[b] >= MAX_CONNECTIONS
+        ) {
+          continue;
+        }
 
-          if (
-            !linked.has(edgeKey(a, b)) &&
-            distance <= maxExtraLength
-          ) {
-            candidates.push({
-              a,
-              b,
-              distance
-            });
-          }
+        const needsA = degrees[a] < connectionTargets[a];
+        const needsB = degrees[b] < connectionTargets[b];
+
+        if (!needsA && !needsB) continue;
+
+        // Prefer uncrossed lines, but allow crossings when needed.
+        const crossingPenalty = crossesExisting(a, b) ? 3 : 1;
+
+        // Prefer connecting two nodes that both need more links.
+        const targetPenalty = needsA && needsB ? 1 : 2;
+
+        const crowdingPenalty =
+          1 + 0.15 * (degrees[a] + degrees[b]);
+
+        const score =
+          distance *
+          crossingPenalty *
+          targetPenalty *
+          crowdingPenalty;
+
+        if (score < bestScore) {
+          bestScore = score;
+          best = candidate;
         }
       }
 
-      // Add short, noncrossing connections to form loops.
-      for (let i = 0; i < extraBudget; i++) {
-        let best = null;
-        let bestScore = Infinity;
+      if (!best) break;
 
-        for (const candidate of candidates) {
-          const { a, b, distance } = candidate;
-
-          if (
-            linked.has(edgeKey(a, b)) ||
-            degrees[a] >= connectionLimits[a] ||
-            degrees[b] >= connectionLimits[b] ||
-            crossesExisting(a, b)
-          ) {
-            continue;
-          }
-
-          const leafBonus =
-            degrees[a] === 1 || degrees[b] === 1
-              ? 0.7
-              : 1;
-
-          const score =
-            distance *
-            leafBonus *
-            (1 + 0.2 * (degrees[a] + degrees[b]));
-
-          if (score < bestScore) {
-            bestScore = score;
-            best = candidate;
-          }
-        }
-
-        if (!best) break;
-
-        addEdge(best.a, best.b);
-      }
+      addEdge(best.a, best.b);
+    }
 
       // Draw the completed network.
       edges.forEach(([a, b]) => {
