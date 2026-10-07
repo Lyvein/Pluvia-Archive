@@ -193,6 +193,34 @@ if (loader && arrivingFromTransition) {
   }
 }
 
+
+// Direct Home visits use loading instead of a transition.
+if (loader && currentPageTheme === 'home' && !arrivingFromTransition) {
+  document.documentElement.classList.add('is-initial-loading');
+
+  loader.classList.remove('hidden', 'wipe-out');
+  loader.classList.add('active');
+
+  const minimumLoadingTime = new Promise(resolve => {
+    setTimeout(resolve, LOADING_DURATION);
+  });
+
+  const pageReady = new Promise(resolve => {
+    if (document.readyState === 'complete') {
+      resolve();
+    } else {
+      window.addEventListener('load', resolve, { once: true });
+    }
+  });
+
+  Promise.all([minimumLoadingTime, pageReady]).then(() => {
+    requestAnimationFrame(() => {
+      document.documentElement.classList.remove('is-initial-loading');
+      loader.classList.remove('active');
+    });
+  });
+}
+
 // =========================================================
 // NAVIGATION
 // =========================================================

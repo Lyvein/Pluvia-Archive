@@ -797,3 +797,12 @@ html.is-arriving .out-panel[data-transition-theme="nodal-hub-green"].leaving {
     -webkit-backdrop-filter: blur(20px);
   }
 }
+
+/* Direct Home visit: show the loader before the page's first paint. */
+html.is-initial-loading .loader {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  background: #000000;
+  transition: none;
+}

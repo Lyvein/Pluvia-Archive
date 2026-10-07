@@ -10,6 +10,8 @@
 					sessionStorage.getItem('departingTheme') || 'home';
 				document.documentElement.dataset.targetTheme =
 					sessionStorage.getItem('targetTheme') || document.body?.dataset?.pageTheme || 'home';
+			} else {
+				document.documentElement.classList.add('is-initial-loading');
 			}
 		</script>
 				<title>Pluvia Archive</title>
