@@ -667,6 +667,7 @@ html[data-hub-variant="green"] .node-camera-back:focus-visible {
   height: 250%;
   pointer-events: none;
   will-change: transform, background-color, backdrop-filter;
+  visibility: hidden;
 }
 
 .transition-panel {
@@ -687,6 +688,7 @@ html[data-hub-variant="green"] .node-camera-back:focus-visible {
   background: var(--transition-solid, rgba(0, 0, 0, 1));
   backdrop-filter: blur(0px);
   -webkit-backdrop-filter: blur(0px);
+  visibility: visible;
 }
 
 .loader.active {
@@ -700,14 +702,29 @@ html.is-arriving .loader {
   transition: none;
 }
 
-html.is-arriving[data-departing-theme="home"] .loader {
-  background: var(--transition-solid, #000000);
+/* Choose the arrival color before script.js runs. */
+html.is-arriving[data-departing-theme="home"] {
+  --arrival-panel-color: #000000;
 }
 
-html.is-arriving[data-departing-theme="nodal-hub"] .loader {
-  background: var(--transition-solid, #ebf6fa);
+html.is-arriving[data-departing-theme="nodal-hub"] {
+  --arrival-panel-color: #EBF6FA;
 }
 
+html.is-arriving[data-departing-theme="nodal-hub-green"] {
+  --arrival-panel-color: #9BBD97;
+}
+
+/* Cover the first frame with the departing page's color. */
+html.is-arriving[data-departing-theme] .loader,
+html.is-arriving[data-departing-theme] .out-panel:not(.leaving) {
+  background-color: var(--arrival-panel-color, #000000);
+}
+
+/* The departure panel must stay hidden during arrival. */
+html.is-arriving .transition-panel {
+  visibility: hidden;
+}
 .out-panel {
   z-index: 1001;
   opacity: 1;

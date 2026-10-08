@@ -11,7 +11,6 @@ const loader = document.getElementById('loader');
 const TRANSITION_DURATION = 1400;
 const LOADING_DURATION = 1500;
 
-// Resolve the theme from the selected hub appearance.
 function getCurrentPageTheme() {
   if (document.body.classList.contains('nodal_hub-page')) {
     return document.documentElement.dataset.hubVariant === 'green'
@@ -40,6 +39,8 @@ const transitionColors = {
   }
 };
 
+let navigationInProgress = false;
+
 const arrivingFromTransition =
   sessionStorage.getItem('siteTransitioning') === '1';
 
@@ -50,7 +51,10 @@ function setPanelTheme(element, theme) {
 
   element.dataset.transitionTheme = theme;
   element.style.setProperty('--transition-solid', colors.solid);
-  element.style.setProperty('--transition-translucent', colors.translucent);
+  element.style.setProperty(
+    '--transition-translucent',
+    colors.translucent
+  );
 }
 
 function forceReflow(element) {
@@ -58,15 +62,130 @@ function forceReflow(element) {
   element.getBoundingClientRect();
 }
 
+function clearTransitionFlags() {
+  sessionStorage.removeItem('siteTransitioning');
+  sessionStorage.removeItem('departingTheme');
+  sessionStorage.removeItem('targetTheme');
+}
+
+function resetTransitionState() {
+  // Completely remove the loader from rendering before recoloring it.
+  if (loader) {
+    loader.style.display = 'none';
+    loader.style.transition = 'none';
+    loader.style.opacity = '0';
+    loader.style.visibility = 'hidden';
+    loader.classList.remove('active', 'wipe-out');
+
+    forceReflow(loader);
+  }
+
+  // Retire the previous arrival panel.
+  if (outPanel) {
+    outPanel.style.transition = 'none';
+    outPanel.style.animation = 'none';
+    outPanel.style.visibility = 'hidden';
+
+    outPanel.classList.remove('leaving');
+
+    outPanel.style.backgroundColor = '';
+    outPanel.style.backdropFilter = '';
+    outPanel.style.webkitBackdropFilter = '';
+  }
+
+  if (panel) {
+    panel.style.transition = 'none';
+    panel.classList.remove('covering');
+    setPanelTheme(panel, currentPageTheme);
+
+    forceReflow(panel);
+    panel.style.transition = '';
+  }
+
+  const root = document.documentElement;
+
+  root.classList.remove('is-arriving', 'is-initial-loading');
+  root.removeAttribute('data-departing-theme');
+  root.removeAttribute('data-target-theme');
+
+  if (loader) {
+    loader.style.backgroundColor = '';
+    setPanelTheme(loader, currentPageTheme);
+
+    const loadingImage = loader.querySelector('.loader-gif');
+
+    if (loadingImage) {
+      loadingImage.style.transition = '';
+      loadingImage.style.opacity = '';
+    }
+
+    forceReflow(loader);
+
+    // Keep display:none until the next departure explicitly reveals it.
+  }
+}
+
+// Clear restored overlays after browser Back/Forward navigation.
+window.addEventListener('pageshow', event => {
+  if (!event.persisted) return;
+
+  navigationInProgress = false;
+  clearTransitionFlags();
+  resetTransitionState();
+});
+
 setPanelTheme(panel, currentPageTheme);
 
 // =========================================================
 // ARRIVING ON DESTINATION PAGE
 // =========================================================
 
+async function startArrivalWhenReady(callback) {
+  if (document.body.classList.contains('nodal_hub-page')) {
+    const background = getComputedStyle(document.body)
+      .getPropertyValue('--hub-background')
+      .trim();
+
+    const match = background.match(
+      /^url\(\s*(['"]?)(.*?)\1\s*\)$/
+    );
+
+    if (match && match[2]) {
+      const image = new Image();
+
+      await new Promise(resolve => {
+        image.onload = resolve;
+        image.onerror = resolve;
+
+        image.src = new URL(
+          match[2],
+          document.baseURI
+        ).href;
+
+        if (image.complete) resolve();
+      });
+
+      if (
+        image.naturalWidth &&
+        typeof image.decode === 'function'
+      ) {
+        try {
+          await image.decode();
+        } catch {
+          // Continue if image decoding fails.
+        }
+      }
+    }
+  }
+
+  requestAnimationFrame(callback);
+}
+
 if (loader && arrivingFromTransition) {
   const departingTheme =
     sessionStorage.getItem('departingTheme') || 'home';
+
+  clearTransitionFlags();
 
   setPanelTheme(loader, departingTheme);
   loader.classList.add('active');
@@ -81,15 +200,15 @@ if (loader && arrivingFromTransition) {
     const solidColor = colors.solid;
     const translucentColor = colors.translucent;
 
-    // Prepare the OUT panel as solid and unblurred.
     outPanel.style.animation = 'none';
     outPanel.style.transition = 'none';
     outPanel.style.backgroundColor = solidColor;
     outPanel.style.backdropFilter = 'blur(0px)';
     outPanel.style.webkitBackdropFilter = 'blur(0px)';
+
     forceReflow(outPanel);
 
-    // Measure its movement while the loader covers the screen.
+    // Measure the full movement while the loader covers the page.
     const startLeft = outPanel.getBoundingClientRect().left;
 
     outPanel.classList.add('leaving');
@@ -104,85 +223,97 @@ if (loader && arrivingFromTransition) {
       'backdrop-filter 1s ease, ' +
       '-webkit-backdrop-filter 1s ease';
 
+    startArrivalWhenReady(() => {
+  // Keep the loader fully opaque while preparing the panel beneath it.
+  loader.style.setProperty('background', solidColor, 'important');
+  loader.style.transition = 'none';
+
+  // Explicitly prepare the arrival panel using the DEPARTING color.
+  // This overrides any destination-page background or animation.
+  outPanel.classList.remove('leaving');
+
+  outPanel.style.setProperty('animation', 'none', 'important');
+  outPanel.style.transition = 'none';
+  outPanel.style.setProperty('background', solidColor, 'important');
+  outPanel.style.visibility = 'visible';
+  outPanel.style.opacity = '1';
+  outPanel.style.backdropFilter = 'blur(0px)';
+  outPanel.style.webkitBackdropFilter = 'blur(0px)';
+
+  forceReflow(outPanel);
+
+  // Allow the prepared panel to render underneath the opaque loader.
+  requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      // Keep the GIF visible over the solid OUT panel.
-      loader.style.backgroundColor = 'transparent';
+      outPanel.style.transition =
+        'transform 1.4s cubic-bezier(0.83, 0, 0.17, 1), ' +
+        'background-color 1s ease, ' +
+        'backdrop-filter 1s ease, ' +
+        '-webkit-backdrop-filter 1s ease';
 
-      requestAnimationFrame(() => {
-        const loadingImage = loader.querySelector('.loader-gif');
+      forceReflow(outPanel);
 
-        if (loadingImage) {
-          loadingImage.style.transition = 'opacity 0.2s ease';
-          loadingImage.style.opacity = '0';
-        }
+      // Perform the handoff in ONE frame:
+      // remove the loader and start moving the same-colored panel.
+      loader.style.display = 'none';
+      loader.style.opacity = '0';
+      loader.style.visibility = 'hidden';
+      loader.classList.remove('active', 'wipe-out');
 
-        outPanel.classList.add('leaving');
+      outPanel.classList.add('leaving');
 
-        let blurStarted = false;
+      let arrivalFinished = false;
+      let positionFrame = 0;
 
-        function watchPanelPosition() {
-          if (blurStarted) return;
+      function watchPanelPosition() {
+        if (arrivalFinished) return;
 
-          const currentLeft =
-            outPanel.getBoundingClientRect().left;
+        const currentLeft =
+          outPanel.getBoundingClientRect().left;
 
-          const distance = endLeft - startLeft;
+        const distance = endLeft - startLeft;
 
-          const progress = distance === 0
-            ? 1
-            : (currentLeft - startLeft) / distance;
+        const progress = distance === 0
+          ? 1
+          : (currentLeft - startLeft) / distance;
 
-          if (progress >= 0.15) {
-            blurStarted = true;
+        if (progress >= 0.15) {
+          // Only opacity changes: the panel keeps its original hue.
+          outPanel.style.setProperty(
+            'background-color',
+            translucentColor,
+            'important'
+          );
 
-            outPanel.style.backgroundColor = translucentColor;
-            outPanel.style.backdropFilter = 'blur(20px)';
-            outPanel.style.webkitBackdropFilter = 'blur(20px)';
-          } else {
+          outPanel.style.backdropFilter = 'blur(20px)';
+          outPanel.style.webkitBackdropFilter = 'blur(20px)';
+        } else {
+          positionFrame =
             requestAnimationFrame(watchPanelPosition);
-          }
         }
+      }
 
-        requestAnimationFrame(watchPanelPosition);
+      positionFrame = requestAnimationFrame(watchPanelPosition);
 
-        setTimeout(() => {
-          loader.style.transition = 'none';
-          loader.style.opacity = '0';
-          loader.style.visibility = 'hidden';
+      setTimeout(() => {
+        arrivalFinished = true;
+        cancelAnimationFrame(positionFrame);
 
-          loader.classList.remove('active', 'wipe-out');
-          loader.removeAttribute('data-transition-theme');
+        // Hide both layers before removing their temporary overrides.
+        outPanel.style.visibility = 'hidden';
+        loader.style.display = 'none';
 
-          document.documentElement.classList.remove('is-arriving');
-          document.documentElement.removeAttribute(
-            'data-departing-theme'
-          );
-          document.documentElement.removeAttribute(
-            'data-target-theme'
-          );
+        outPanel.style.removeProperty('background');
+        loader.style.removeProperty('background');
 
-          sessionStorage.removeItem('siteTransitioning');
-          sessionStorage.removeItem('departingTheme');
-          sessionStorage.removeItem('targetTheme');
-
-          forceReflow(loader);
-
-          requestAnimationFrame(() => {
-            loader.style.transition = '';
-            loader.style.opacity = '';
-            loader.style.visibility = '';
-            loader.style.backgroundColor = '';
-
-            if (loadingImage) {
-              loadingImage.style.transition = '';
-              loadingImage.style.opacity = '';
-            }
-          });
-        }, TRANSITION_DURATION);
-      });
+        resetTransitionState();
+      }, TRANSITION_DURATION);
     });
+  });
+});
   } else {
-    // Fallback if the OUT panel is missing.
+    // Fallback if the arrival panel is missing.
+    loader.style.display = 'none';
     loader.style.transition = 'none';
     loader.style.opacity = '0';
     loader.style.visibility = 'hidden';
@@ -191,9 +322,7 @@ if (loader && arrivingFromTransition) {
     document.documentElement.removeAttribute('data-departing-theme');
     document.documentElement.removeAttribute('data-target-theme');
 
-    sessionStorage.removeItem('siteTransitioning');
-    sessionStorage.removeItem('departingTheme');
-    sessionStorage.removeItem('targetTheme');
+    clearTransitionFlags();
   }
 } else {
   // Normal direct visit or refresh.
@@ -211,9 +340,13 @@ if (loader && arrivingFromTransition) {
   }
 }
 
-
-// Direct Home visits use loading instead of a transition.
-if (loader && currentPageTheme === 'home' && !arrivingFromTransition) {
+// Direct Home visits use the initial loading screen.
+if (
+  loader &&
+  currentPageTheme === 'home' &&
+  !arrivingFromTransition &&
+  document.body.dataset.initialLoading !== 'false'
+) {
   document.documentElement.classList.add('is-initial-loading');
 
   loader.classList.remove('hidden', 'wipe-out');
@@ -243,50 +376,92 @@ if (loader && currentPageTheme === 'home' && !arrivingFromTransition) {
 // NAVIGATION
 // =========================================================
 
-document.querySelectorAll('nav a').forEach((link) => {
-  link.addEventListener('click', (e) => {
-    const href = link.getAttribute('href');
+// Use the same transition for navigation links and hub nodes.
+document.addEventListener('click', e => {
+  const link = e.target.closest('a[href]');
 
-    if (!href || href.startsWith('#') || href.startsWith('http')) {
-      return;
-    }
+  if (
+    !link ||
+    e.defaultPrevented ||
+    e.button !== 0 ||
+    e.metaKey ||
+    e.ctrlKey ||
+    e.shiftKey ||
+    e.altKey ||
+    link.hasAttribute('download') ||
+    (link.target && link.target !== '_self')
+  ) {
+    return;
+  }
 
-    const targetURL = new URL(href, window.location.href);
-    const currentURL = new URL(window.location.href);
+  const targetURL = new URL(link.href, window.location.href);
+  const currentURL = new URL(window.location.href);
 
-    if (targetURL.pathname === currentURL.pathname) {
-      e.preventDefault();
-      return;
-    }
+  if (
+    targetURL.origin !== currentURL.origin ||
+    !/\.html$/i.test(targetURL.pathname)
+  ) {
+    return;
+  }
 
-    e.preventDefault();
+  if (
+    targetURL.pathname === currentURL.pathname &&
+    targetURL.search === currentURL.search
+  ) {
+    if (!targetURL.hash) e.preventDefault();
+    return;
+  }
 
-    if (!panel) {
-      window.location.href = href;
-      return;
-    }
+  e.preventDefault();
 
-    setPanelTheme(panel, currentPageTheme);
-    panel.classList.remove('covering');
-    forceReflow(panel);
+  // Prevent arrival cleanup from interrupting a new departure.
+  if (
+    navigationInProgress ||
+    document.documentElement.classList.contains('is-arriving') ||
+    document.documentElement.classList.contains('is-initial-loading')
+  ) {
+    return;
+  }
 
-    requestAnimationFrame(() => {
-      panel.classList.add('covering');
+  navigationInProgress = true;
+
+  if (!panel) {
+    window.location.href = targetURL.href;
+    return;
+  }
+
+  resetTransitionState();
+
+  const departureTheme = getCurrentPageTheme();
+
+  setPanelTheme(panel, departureTheme);
+  forceReflow(panel);
+
+  requestAnimationFrame(() => {
+    panel.classList.add('covering');
+
+    setTimeout(() => {
+      if (loader) {
+        // Apply the correct color before bringing the loader back.
+        setPanelTheme(loader, departureTheme);
+
+        loader.style.backgroundColor = '';
+        loader.style.transition = 'none';
+        loader.style.opacity = '';
+        loader.style.visibility = '';
+
+        loader.classList.remove('hidden', 'wipe-out');
+        loader.classList.add('active');
+        loader.style.display = '';
+      }
 
       setTimeout(() => {
-        if (loader) {
-          setPanelTheme(loader, currentPageTheme);
-          loader.classList.add('active');
-        }
+        sessionStorage.setItem('departingTheme', departureTheme);
+        sessionStorage.setItem('siteTransitioning', '1');
 
-        setTimeout(() => {
-          sessionStorage.setItem('departingTheme', currentPageTheme);
-          sessionStorage.setItem('siteTransitioning', '1');
-
-          window.location.href = href;
-        }, LOADING_DURATION);
-      }, TRANSITION_DURATION);
-    });
+        window.location.href = targetURL.href;
+      }, LOADING_DURATION);
+    }, TRANSITION_DURATION);
   });
 });
 
